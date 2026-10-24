@@ -29,6 +29,9 @@ const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
     iframe.sandbox.add('allow-scripts');
     iframe.sandbox.add('allow-same-origin');
     iframe.sandbox.add('allow-modals');
+    iframe.sandbox.add('allow-popups');
+    iframe.sandbox.add('allow-forms');
+    iframe.sandbox.add('allow-top-navigation-by-user-activation');
     
     containerRef.current.innerHTML = '';
     containerRef.current.appendChild(iframe);
@@ -85,6 +88,20 @@ const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
           }
           .material-icons, .material-symbols-outlined {
             font-size: inherit;
+          }
+          /* Скрыть Windows-скроллбары */
+          ::-webkit-scrollbar {
+            width: 0;
+            height: 0;
+            display: none;
+          }
+          * {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+          }
+          /* iOS-style smooth scrolling */
+          * {
+            -webkit-overflow-scrolling: touch;
           }
         </style>
         ${ePhoneAPI}
