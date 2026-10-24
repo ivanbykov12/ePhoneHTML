@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppContext, getStatusBarPadding, EApp, getEAppVersion } from '../context/AppContext';
-import { FolderOpen, Upload, Download, Trash2 } from 'lucide-react';
+import { FolderOpen, Upload, Download, Trash2, Move, Home, ArrowLeft } from 'lucide-react';
 
 interface HomeScreenProps {
   onOpenApp: (app: string) => void;
@@ -11,10 +11,31 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
   const paddingTop = getStatusBarPadding(settings.phoneModel);
   const [showCustomApps, setShowCustomApps] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
+  const [desktopApps, setDesktopApps] = useState<string[]>([]);
+  
+  // Загрузка перенесённых приложений из localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('desktopApps');
+    if (saved) {
+      try {
+        setDesktopApps(JSON.parse(saved));
+      } catch {}
+    }
+  }, []);
+
+  // Сохранение в localStorage
+  useEffect(() => {
+    localStorage.setItem('desktopApps', JSON.stringify(desktopApps));
+  }, [desktopApps]);
   
   // Разделяем системные и пользовательские .eapp приложения
   const systemEApps = customApps.filter(app => app.isSystem);
   const userEApps = customApps.filter(app => !app.isSystem);
+  
+  // Приложения на рабочем столе (не системные, не в папке)
+  const desktopEApps = userEApps.filter(app => desktopApps.includes(app.id));
+  // Приложения в папке Custom Apps
+  const folderEApps = userEApps.filter(app => !desktopApps.includes(app.id));
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -41,6 +62,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
   const handleDeleteApp = (app: EApp) => {
     if (confirm(`Удалить "${app.name}"?`)) {
       setCustomApps(prev => prev.filter(a => a.id !== app.id));
+      setDesktopApps(prev => prev.filter(id => id !== app.id));
     }
   };
 
@@ -52,6 +74,14 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
     a.download = `${app.id}.eapp`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleMoveToDesktop = (app: EApp) => {
+    setDesktopApps(prev => [...prev, app.id]);
+  };
+
+  const handleMoveToFolder = (app: EApp) => {
+    setDesktopApps(prev => prev.filter(id => id !== app.id));
   };
 
   const renderAppIcon = (app: EApp) => {
@@ -74,11 +104,33 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
     );
   };
 
+  const renderSmallAppIcon = (app: EApp) => {
+    const isMaterial = app.icon?.startsWith('material:');
+    const iconContent = isMaterial ? app.icon.replace('material:', '') : (app.icon || '📱');
+    const eappVersion = getEAppVersion(app);
+    
+    return (
+      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${app.color || 'from-gray-400 to-gray-600'} flex items-center justify-center shadow-lg relative`}>
+        {isMaterial ? (
+          <span className="material-icons text-white text-xl">{iconContent}</span>
+        ) : (
+          <span className="text-xl">{iconContent}</span>
+        )}
+        {/* Версия .eapp */}
+        <div className="absolute -bottom-0.5 -right-0.5 px-0.5 py-px bg-black/70 rounded text-[6px] text-white font-bold">
+          v{eappVersion}
+        </div>
+      </div>
+    );
+  };
+
   if (showCustomApps) {
     return (
       <div className={`w-full h-full bg-gradient-to-b from-gray-900 to-black flex flex-col`} style={{ paddingTop }}>
         <div className="px-4 py-3 flex items-center justify-between">
-          <button onClick={() => setShowCustomApps(false)} className="text-blue-400 text-sm">← Назад</button>
+          <button onClick={() => setShowCustomApps(false)} className="text-blue-400 text-sm flex items-center gap-1">
+            <ArrowLeft className="w-4 h-4" /> Назад
+          </button>
           <h1 className="text-white text-lg font-bold">Custom Apps</h1>
           <button onClick={() => setShowUpload(true)} className="text-blue-400">
             <Upload className="w-5 h-5" />
@@ -112,59 +164,134 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
         )}
 
         <div className="flex-1 px-4 overflow-y-auto">
-          {userEApps.length === 0 ? (
-            <div className="text-center py-20">
-              <FolderOpen className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-400 text-sm">Нет пользовательских приложений</p>
-              <p className="text-gray-500 text-xs mt-2">
-                Добавьте .eapp файлы в папку<br/>public/apps/ или загрузите через кнопку ↑
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {userEApps.map(app => (
-                <div
-                  key={app.id}
-                  className="bg-gray-800 rounded-xl p-3 flex items-center gap-3"
-                >
-                  <div
-                    className={`w-12 h-12 rounded-xl bg-gradient-to-br ${app.color || 'from-gray-400 to-gray-600'} flex items-center justify-center text-xl shadow-lg cursor-pointer flex-shrink-0`}
-                    onClick={() => onOpenApp(app.id)}
-                  >
-                    {app.icon?.startsWith('material:') ? (
-                      <span className="material-icons text-white">{app.icon.replace('material:', '')}</span>
-                    ) : (
-                      <span>{app.icon || '📱'}</span>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0 cursor-pointer" onClick={() => onOpenApp(app.id)}>
-                    <div className="text-white text-sm font-medium truncate">{app.name}</div>
-                    <div className="text-gray-400 text-xs truncate">
-                      {app.description || app.author || 'Custom App'}
+          {/* Приложения на рабочем столе */}
+          {desktopEApps.length > 0 && (
+            <div className="mb-4">
+              <div className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2 flex items-center gap-1">
+                <Home className="w-3 h-3" /> На рабочем столе
+              </div>
+              <div className="space-y-2">
+                {desktopEApps.map(app => {
+                  const eappVersion = getEAppVersion(app);
+                  return (
+                    <div
+                      key={app.id}
+                      className="bg-gray-800/50 border border-green-500/20 rounded-xl p-3 flex items-center gap-3"
+                    >
+                      <div
+                        className="cursor-pointer flex-shrink-0"
+                        onClick={() => onOpenApp(app.id)}
+                      >
+                        {renderSmallAppIcon(app)}
+                      </div>
+                      <div className="flex-1 min-w-0 cursor-pointer" onClick={() => onOpenApp(app.id)}>
+                        <div className="flex items-center gap-2">
+                          <span className="text-white text-sm font-medium truncate">{app.name}</span>
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
+                            eappVersion === '1.1' ? 'bg-green-500/20 text-green-400' : 'bg-gray-600/40 text-gray-400'
+                          }`}>
+                            eApp v{eappVersion}
+                          </span>
+                        </div>
+                        <div className="text-green-400/70 text-xs">На рабочем столе</div>
+                      </div>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => handleMoveToFolder(app)}
+                          className="w-8 h-8 bg-gray-700 rounded-lg flex items-center justify-center active:bg-gray-600"
+                          title="Переместить в папку"
+                        >
+                          <FolderOpen className="w-4 h-4 text-orange-400" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteApp(app)}
+                          className="w-8 h-8 bg-gray-700 rounded-lg flex items-center justify-center active:bg-gray-600"
+                          title="Удалить"
+                        >
+                          <Trash2 className="w-4 h-4 text-red-400" />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex gap-1">
-                    <button
-                      onClick={() => handleDownloadApp(app)}
-                      className="w-8 h-8 bg-gray-700 rounded-lg flex items-center justify-center active:bg-gray-600"
-                    >
-                      <Download className="w-4 h-4 text-blue-400" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteApp(app)}
-                      className="w-8 h-8 bg-gray-700 rounded-lg flex items-center justify-center active:bg-gray-600"
-                    >
-                      <Trash2 className="w-4 h-4 text-red-400" />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                  );
+                })}
+              </div>
             </div>
           )}
 
-          <div className="mt-6 bg-gray-800/50 rounded-xl p-4">
+          {/* Приложения в папке */}
+          <div className="mb-4">
+            <div className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2 flex items-center gap-1">
+              <FolderOpen className="w-3 h-3" /> В папке
+            </div>
+            {folderEApps.length === 0 ? (
+              <div className="text-center py-10">
+                <p className="text-gray-500 text-xs">
+                  {desktopEApps.length > 0 
+                    ? 'Все приложения на рабочем столе'
+                    : 'Добавьте .eapp файлы через кнопку ↑'}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {folderEApps.map(app => {
+                  const eappVersion = getEAppVersion(app);
+                  return (
+                    <div
+                      key={app.id}
+                      className="bg-gray-800 rounded-xl p-3 flex items-center gap-3"
+                    >
+                      <div
+                        className="cursor-pointer flex-shrink-0"
+                        onClick={() => onOpenApp(app.id)}
+                      >
+                        {renderSmallAppIcon(app)}
+                      </div>
+                      <div className="flex-1 min-w-0 cursor-pointer" onClick={() => onOpenApp(app.id)}>
+                        <div className="flex items-center gap-2">
+                          <span className="text-white text-sm font-medium truncate">{app.name}</span>
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
+                            eappVersion === '1.1' ? 'bg-green-500/20 text-green-400' : 'bg-gray-600/40 text-gray-400'
+                          }`}>
+                            eApp v{eappVersion}
+                          </span>
+                        </div>
+                        <div className="text-gray-400 text-xs truncate">
+                          {app.description || app.author || 'Custom App'}
+                        </div>
+                      </div>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => handleMoveToDesktop(app)}
+                          className="w-8 h-8 bg-gray-700 rounded-lg flex items-center justify-center active:bg-gray-600"
+                          title="Переместить на рабочий стол"
+                        >
+                          <Move className="w-4 h-4 text-green-400" />
+                        </button>
+                        <button
+                          onClick={() => handleDownloadApp(app)}
+                          className="w-8 h-8 bg-gray-700 rounded-lg flex items-center justify-center active:bg-gray-600"
+                          title="Скачать .eapp"
+                        >
+                          <Download className="w-4 h-4 text-blue-400" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteApp(app)}
+                          className="w-8 h-8 bg-gray-700 rounded-lg flex items-center justify-center active:bg-gray-600"
+                          title="Удалить"
+                        >
+                          <Trash2 className="w-4 h-4 text-red-400" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="mt-4 bg-gray-800/50 rounded-xl p-4">
             <p className="text-gray-400 text-xs">
-              💡 <span className="text-gray-300 font-medium">Совет:</span> Системные приложения в <code className="bg-gray-700 px-1 rounded">public/apps/system/</code>. Пользовательские - в <code className="bg-gray-700 px-1 rounded">public/apps/</code>
+              💡 <span className="text-gray-300 font-medium">Совет:</span> Нажмите <Move className="w-3 h-3 inline text-green-400" /> чтобы переместить на рабочий стол, <FolderOpen className="w-3 h-3 inline text-orange-400" /> чтобы вернуть в папку
             </p>
           </div>
         </div>
@@ -195,6 +322,20 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
             </div>
           ))}
 
+          {/* Приложения перенесённые на рабочий стол */}
+          {desktopEApps.map(app => (
+            <div
+              key={app.id}
+              className="flex flex-col items-center app-icon cursor-pointer relative"
+              onClick={() => onOpenApp(app.id)}
+            >
+              {renderAppIcon(app)}
+              <span className="text-white text-[10px] mt-1 text-center leading-tight truncate w-16">
+                {app.name}
+              </span>
+            </div>
+          ))}
+
           {/* Custom Apps Folder */}
           <div
             className="flex flex-col items-center app-icon cursor-pointer"
@@ -202,9 +343,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
           >
             <div className="w-14 h-14 rounded-[14px] bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg relative">
               <FolderOpen className="w-7 h-7 text-white" strokeWidth={1.8} />
-              {userEApps.length > 0 && (
+              {folderEApps.length > 0 && (
                 <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-[9px] font-bold">{userEApps.length}</span>
+                  <span className="text-white text-[9px] font-bold">{folderEApps.length}</span>
                 </div>
               )}
             </div>
