@@ -5,7 +5,7 @@ const SafariApp: React.FC = () => {
   const [currentPage, setCurrentPage] = useState('home');
 
   const bookmarks = [
-    { name: 'Apple', icon: '🍎', url: 'apple.com', color: 'from-gray-700 to-gray-900' },
+    { name: 'Epple', icon: '🍎', url: 'epple.com', color: 'from-gray-700 to-gray-900' },
     { name: 'Google', icon: '🔍', url: 'google.com', color: 'from-blue-400 to-blue-600' },
     { name: 'YouTube', icon: '▶️', url: 'youtube.com', color: 'from-red-500 to-red-700' },
     { name: 'GitHub', icon: '🐙', url: 'github.com', color: 'from-gray-800 to-black' },
@@ -16,7 +16,7 @@ const SafariApp: React.FC = () => {
   ];
 
   const favorites = [
-    { title: 'Apple - Официальный сайт', url: 'apple.com', desc: 'Инновации от Apple' },
+    { title: 'Epple - Официальный сайт', url: 'epple.com', desc: 'Инновации от Epple' },
     { title: 'React - Библиотека UI', url: 'react.dev', desc: 'Создание пользовательских интерфейсов' },
     { title: 'MDN Web Docs', url: 'developer.mozilla.org', desc: 'Документация для разработчиков' },
   ];
@@ -102,7 +102,7 @@ const SafariApp: React.FC = () => {
       </div>
 
       {/* Bottom Bar */}
-      <div className="absolute bottom-12 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-gray-200 px-6 py-2 flex justify-around">
+      <div className="absolute bottom-4 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-gray-200 px-6 py-2 flex justify-around">
         <button onClick={() => setCurrentPage('home')} className="text-blue-500 text-lg">🏠</button>
         <button className="text-blue-500 text-lg">←</button>
         <button className="text-blue-500 text-lg">→</button>

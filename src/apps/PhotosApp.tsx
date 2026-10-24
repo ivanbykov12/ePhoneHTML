@@ -42,7 +42,7 @@ const PhotosApp: React.FC = () => {
           {photo.emoji}
         </div>
         <div className="text-white text-lg mt-4">{photo.label}</div>
-        <div className="text-gray-400 text-sm mt-1">iPhone 15 Pro • Сегодня</div>
+        <div className="text-gray-400 text-sm mt-1">ePhone 14 • Сегодня</div>
       </div>
     );
   }

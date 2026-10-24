@@ -52,16 +52,16 @@ const AppRenderer: React.FC<AppRendererProps> = ({ appName, onClose }) => {
 
   return (
     <div className="w-full h-full animate-slide-up relative">
-      {/* App Header Bar - below status bar */}
-      <div className="absolute left-0 right-0 z-50 flex justify-center" style={{ top: paddingTop }}>
-        <button
-          onClick={onClose}
-          className="px-4 py-1.5 bg-black/40 backdrop-blur-md rounded-full text-white text-xs font-medium active:scale-90 transition-transform border border-white/10"
-        >
-          ← Домой
-        </button>
-      </div>
       <div style={{ paddingTop }}>
+        {/* App Header Bar - below status bar */}
+        <div className="flex justify-center mb-1">
+          <button
+            onClick={onClose}
+            className="px-4 py-1.5 bg-black/40 backdrop-blur-md rounded-full text-white text-xs font-medium active:scale-90 transition-transform border border-white/10"
+          >
+            ← Домой
+          </button>
+        </div>
         {renderApp()}
       </div>
     </div>

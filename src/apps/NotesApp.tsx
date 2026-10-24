@@ -10,7 +10,7 @@ interface Note {
 const NotesApp: React.FC = () => {
   const [notes, setNotes] = useState<Note[]>([
     { id: 1, title: 'Список покупок', content: 'Молоко, хлеб, яйца, сыр, масло', date: 'Сегодня' },
-    { id: 2, title: 'Идеи для проекта', content: 'Сделать клон iPhone, добавить игры, Dynamic Island', date: 'Вчера' },
+    { id: 2, title: 'Идеи для проекта', content: 'Сделать клон ePhone, добавить игры, Dynamic Island', date: 'Вчера' },
     { id: 3, title: 'Рецепт', content: 'Паста карбонара: бекон, яйца, пармезан, чёрный перец', date: '2 дня назад' },
   ]);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
@@ -77,7 +77,7 @@ const NotesApp: React.FC = () => {
   }
 
   return (
-    <div className="w-full h-full bg-black pt-2 overflow-y-auto pb-20">
+    <div className="w-full h-full bg-black pt-2 overflow-y-auto pb-20 relative">
       <div className="px-4 mb-4">
         <h1 className="text-white text-2xl font-bold">Заметки</h1>
         <div className="bg-gray-800 rounded-xl px-4 py-2 flex items-center gap-2 mt-3">
@@ -102,8 +102,7 @@ const NotesApp: React.FC = () => {
 
       <button
         onClick={createNote}
-        className="fixed bottom-24 right-8 w-14 h-14 bg-yellow-500 rounded-full flex items-center justify-center text-2xl shadow-lg active:scale-90"
-        style={{ position: 'absolute' }}
+        className="absolute bottom-24 right-8 w-14 h-14 bg-yellow-500 rounded-full flex items-center justify-center text-2xl shadow-lg active:scale-90"
       >
         ✏️
       </button>

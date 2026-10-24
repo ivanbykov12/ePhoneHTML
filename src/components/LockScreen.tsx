@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 
 interface LockScreenProps {
@@ -27,10 +27,29 @@ const LockScreen: React.FC<LockScreenProps> = ({ time, onUnlock }) => {
   };
 
   const handleEnd = () => {
-    setIsDragging(false);
-    if (dragY > 80) onUnlock();
-    setDragY(0);
+    if (isDragging) {
+      setIsDragging(false);
+      if (dragY > 80) onUnlock();
+      setDragY(0);
+    }
   };
+
+  // Handle global mouseup/touchend to prevent stuck dragging
+  useEffect(() => {
+    const handleGlobalEnd = () => {
+      if (isDragging) {
+        setIsDragging(false);
+        if (dragY > 80) onUnlock();
+        setDragY(0);
+      }
+    };
+    window.addEventListener('mouseup', handleGlobalEnd);
+    window.addEventListener('touchend', handleGlobalEnd);
+    return () => {
+      window.removeEventListener('mouseup', handleGlobalEnd);
+      window.removeEventListener('touchend', handleGlobalEnd);
+    };
+  }, [isDragging, dragY, onUnlock]);
 
   const getWallpaper = () => {
     const wallpapers: Record<string, string> = {

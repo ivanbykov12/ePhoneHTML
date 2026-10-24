@@ -92,7 +92,7 @@ function App() {
   return (
     <AppContext.Provider value={{ settings, setSettings }}>
       <div className="w-full h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-purple-900 to-black overflow-hidden">
-        {/* iPhone Frame */}
+        {/* ePhone Frame */}
         <div
           className="relative bg-black overflow-hidden"
           style={{
@@ -101,10 +101,10 @@ function App() {
             transformOrigin: 'center center',
           }}
         >
-          {/* Dynamic Island (iPhone 14 only) */}
+          {/* Dynamic Island (ePhone 14 only) */}
           {showIsland && <DynamicIsland content={islandContent} />}
 
-          {/* Notch (iPhone X) */}
+          {/* Notch (ePhone X) */}
           {hasNotch && (
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-7 bg-black rounded-b-2xl z-50" />
           )}
