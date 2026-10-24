@@ -6,17 +6,27 @@
     "system/snake.eapp",
     "system/tetris.eapp",
     "system/game2048.eapp",
+    "system/flappy.eapp",
     "system/calculator.eapp",
     "system/clock.eapp",
-    "system/weather.eapp"
+    "system/weather.eapp",
+    "system/settings.eapp",
+    "system/appstore.eapp",
+    "system/notes.eapp",
+    "system/photos.eapp",
+    "system/music.eapp",
+    "system/safari.eapp",
+    "system/messages.eapp",
+    "system/maps.eapp",
+    "system/health.eapp"
   ],
-  "version": "3.0",
+  "version": "3.1",
   "features": [
     "dark_mode_support",
     "material_icons",
     "model_compatibility_check",
     "control_center",
     "lock_screen_widgets",
-    "system_apps_in_eapp_format"
+    "all_system_apps_in_eapp_format"
   ]
 }

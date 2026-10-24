@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Wifi, Bluetooth, Plane, Moon, Sun, Volume2, VolumeX, Flashlight, Camera, Calculator, Timer, RotateCcw } from 'lucide-react';
+import { Wifi, Bluetooth, Plane, Moon, Sun, Volume2, VolumeX, Flashlight, Camera, Calculator, Timer, X } from 'lucide-react';
 
 const ControlCenter: React.FC = () => {
   const { settings, setSettings, showControlCenter, setShowControlCenter } = useAppContext();
@@ -12,136 +12,162 @@ const ControlCenter: React.FC = () => {
   const [brightness, setBrightness] = useState(settings.brightness);
   const [volume, setVolume] = useState(70);
   const [musicPlaying, setMusicPlaying] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
 
   useEffect(() => {
     setSettings(s => ({ ...s, darkMode, brightness }));
   }, [darkMode, brightness]);
 
+  const handleClose = () => {
+    setIsClosing(true);
+    setTimeout(() => {
+      setShowControlCenter(false);
+      setIsClosing(false);
+    }, 300);
+  };
+
   if (!showControlCenter) return null;
 
   return (
-    <div className="absolute inset-0 z-[100] flex items-start justify-end p-2 pt-12">
+    <div className={`absolute inset-0 z-[100] ${isClosing ? 'animate-fade-out' : 'animate-fade-in'}`}>
+      {/* Backdrop */}
       <div 
-        className="w-full h-full bg-black/80 backdrop-blur-2xl rounded-3xl p-4 animate-slide-down"
-        onClick={(e) => {
-          if (e.target === e.currentTarget) setShowControlCenter(false);
-        }}
-      >
-        <div className="grid grid-cols-4 gap-3 h-full">
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={handleClose}
+      />
+      
+      {/* Control Center Panel */}
+      <div className="absolute top-0 right-0 w-full h-full bg-gray-900/95 backdrop-blur-2xl rounded-t-3xl p-4 pt-12 overflow-y-auto">
+        {/* Close Button */}
+        <button
+          onClick={handleClose}
+          className="absolute top-4 right-4 w-8 h-8 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"
+        >
+          <X className="w-5 h-5 text-white" />
+        </button>
+
+        {/* Header */}
+        <div className="text-white text-lg font-bold mb-4">Control Center</div>
+
+        {/* Grid Layout */}
+        <div className="space-y-3">
           {/* Top Row - Connectivity */}
-          <div className="col-span-2 bg-gray-800/80 rounded-2xl p-3">
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => setWifi(!wifi)}
-                className={`w-10 h-10 rounded-full flex items-center justify-center ${wifi ? 'bg-blue-500' : 'bg-gray-600'}`}
-              >
-                <Wifi className="w-5 h-5 text-white" />
-              </button>
-              <button
-                onClick={() => setBluetooth(!bluetooth)}
-                className={`w-10 h-10 rounded-full flex items-center justify-center ${bluetooth ? 'bg-blue-500' : 'bg-gray-600'}`}
-              >
-                <Bluetooth className="w-5 h-5 text-white" />
-              </button>
-              <button
-                onClick={() => setAirplane(!airplane)}
-                className={`w-10 h-10 rounded-full flex items-center justify-center ${airplane ? 'bg-orange-500' : 'bg-gray-600'}`}
-              >
-                <Plane className="w-5 h-5 text-white" />
-              </button>
-              <button
-                onClick={() => setDarkMode(!darkMode)}
-                className={`w-10 h-10 rounded-full flex items-center justify-center ${darkMode ? 'bg-indigo-500' : 'bg-yellow-500'}`}
-              >
-                {darkMode ? <Moon className="w-5 h-5 text-white" /> : <Sun className="w-5 h-5 text-white" />}
-              </button>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-white/10 rounded-2xl p-4">
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setWifi(!wifi)}
+                  className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${wifi ? 'bg-blue-500' : 'bg-white/20'}`}
+                >
+                  <Wifi className="w-6 h-6 text-white" />
+                </button>
+                <button
+                  onClick={() => setBluetooth(!bluetooth)}
+                  className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${bluetooth ? 'bg-blue-500' : 'bg-white/20'}`}
+                >
+                  <Bluetooth className="w-6 h-6 text-white" />
+                </button>
+                <button
+                  onClick={() => setAirplane(!airplane)}
+                  className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${airplane ? 'bg-orange-500' : 'bg-white/20'}`}
+                >
+                  <Plane className="w-6 h-6 text-white" />
+                </button>
+                <button
+                  onClick={() => setDarkMode(!darkMode)}
+                  className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${darkMode ? 'bg-indigo-500' : 'bg-yellow-500'}`}
+                >
+                  {darkMode ? <Moon className="w-6 h-6 text-white" /> : <Sun className="w-6 h-6 text-white" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Music Player */}
+            <div className="bg-white/10 rounded-2xl p-4 flex flex-col justify-center">
+              <div className="flex items-center gap-3">
+                <div className="w-14 h-14 bg-gradient-to-br from-pink-500 to-purple-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <span className="text-3xl">🎵</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-white text-sm font-medium truncate">Не воспроизводится</div>
+                  <div className="text-gray-400 text-xs">Музыка</div>
+                </div>
+                <button
+                  onClick={() => setMusicPlaying(!musicPlaying)}
+                  className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center flex-shrink-0 hover:bg-white/20 transition-colors"
+                >
+                  {musicPlaying ? (
+                    <div className="w-3 h-3 bg-white rounded-sm" />
+                  ) : (
+                    <div className="w-0 h-0 border-l-[10px] border-l-white border-y-[6px] border-y-transparent ml-1" />
+                  )}
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Music Player */}
-          <div className="col-span-2 bg-gray-800/80 rounded-2xl p-3 flex flex-col justify-center">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-purple-500 rounded-lg flex items-center justify-center">
-                <span className="text-2xl">🎵</span>
+          {/* Brightness and Volume */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-white/10 rounded-2xl p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Sun className="w-5 h-5 text-white" />
+                <span className="text-white text-sm">Яркость</span>
               </div>
-              <div className="flex-1">
-                <div className="text-white text-sm font-medium">Не воспроизводится</div>
-                <div className="text-gray-400 text-xs">Музыка</div>
-              </div>
-              <button
-                onClick={() => setMusicPlaying(!musicPlaying)}
-                className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center"
-              >
-                {musicPlaying ? (
-                  <div className="w-3 h-3 bg-white rounded-sm" />
-                ) : (
-                  <div className="w-0 h-0 border-l-[8px] border-l-white border-y-[5px] border-y-transparent ml-0.5" />
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* Brightness */}
-          <div className="col-span-1 bg-gray-800/80 rounded-2xl p-3 flex flex-col items-center justify-center">
-            <Sun className="w-5 h-5 text-white mb-2" />
-            <div className="w-8 h-24 bg-gray-700 rounded-full relative overflow-hidden">
-              <div 
-                className="absolute bottom-0 w-full bg-white rounded-full transition-all"
-                style={{ height: `${brightness}%` }}
-              />
               <input
                 type="range"
-                min="0"
+                min="30"
                 max="100"
                 value={brightness}
                 onChange={(e) => setBrightness(Number(e.target.value))}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer rotate-[-90deg]"
+                className="w-full accent-white"
               />
+              <div className="text-gray-400 text-xs mt-1 text-center">{brightness}%</div>
             </div>
-          </div>
 
-          {/* Volume */}
-          <div className="col-span-1 bg-gray-800/80 rounded-2xl p-3 flex flex-col items-center justify-center">
-            <Volume2 className="w-5 h-5 text-white mb-2" />
-            <div className="w-8 h-24 bg-gray-700 rounded-full relative overflow-hidden">
-              <div 
-                className="absolute bottom-0 w-full bg-white rounded-full transition-all"
-                style={{ height: `${volume}%` }}
-              />
+            <div className="bg-white/10 rounded-2xl p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Volume2 className="w-5 h-5 text-white" />
+                <span className="text-white text-sm">Громкость</span>
+              </div>
               <input
                 type="range"
                 min="0"
                 max="100"
                 value={volume}
                 onChange={(e) => setVolume(Number(e.target.value))}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer rotate-[-90deg]"
+                className="w-full accent-white"
               />
+              <div className="text-gray-400 text-xs mt-1 text-center">{volume}%</div>
             </div>
           </div>
 
-          {/* Bottom Row - Quick Actions */}
-          <div className="col-span-2 grid grid-cols-2 gap-2">
+          {/* Quick Actions */}
+          <div className="grid grid-cols-4 gap-3">
             <button
               onClick={() => setFlashlight(!flashlight)}
-              className={`aspect-square rounded-2xl flex items-center justify-center ${flashlight ? 'bg-yellow-400' : 'bg-gray-800/80'}`}
+              className={`aspect-square rounded-2xl flex items-center justify-center transition-all ${flashlight ? 'bg-yellow-400' : 'bg-white/10 hover:bg-white/20'}`}
             >
-              <Flashlight className="w-6 h-6 text-white" />
+              <Flashlight className="w-7 h-7 text-white" />
             </button>
-            <button className="aspect-square bg-gray-800/80 rounded-2xl flex items-center justify-center">
-              <Timer className="w-6 h-6 text-white" />
+            <button className="aspect-square bg-white/10 rounded-2xl flex items-center justify-center hover:bg-white/20 transition-colors">
+              <Timer className="w-7 h-7 text-white" />
             </button>
-            <button className="aspect-square bg-gray-800/80 rounded-2xl flex items-center justify-center">
-              <Calculator className="w-6 h-6 text-white" />
+            <button className="aspect-square bg-white/10 rounded-2xl flex items-center justify-center hover:bg-white/20 transition-colors">
+              <Calculator className="w-7 h-7 text-white" />
             </button>
-            <button className="aspect-square bg-gray-800/80 rounded-2xl flex items-center justify-center">
-              <Camera className="w-6 h-6 text-white" />
+            <button className="aspect-square bg-white/10 rounded-2xl flex items-center justify-center hover:bg-white/20 transition-colors">
+              <Camera className="w-7 h-7 text-white" />
             </button>
           </div>
 
           {/* Screen Rotation */}
-          <div className="col-span-2 bg-gray-800/80 rounded-2xl p-3 flex items-center justify-center">
-            <button className="flex items-center gap-2 text-white">
-              <RotateCcw className="w-5 h-5" />
+          <div className="bg-white/10 rounded-2xl p-4">
+            <button className="flex items-center gap-3 text-white w-full">
+              <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </div>
               <span className="text-sm">Портретная ориентация</span>
             </button>
           </div>

@@ -121,9 +121,19 @@ function App() {
       'system/snake.eapp',
       'system/tetris.eapp',
       'system/game2048.eapp',
+      'system/flappy.eapp',
       'system/calculator.eapp',
       'system/clock.eapp',
-      'system/weather.eapp'
+      'system/weather.eapp',
+      'system/settings.eapp',
+      'system/appstore.eapp',
+      'system/notes.eapp',
+      'system/photos.eapp',
+      'system/music.eapp',
+      'system/safari.eapp',
+      'system/messages.eapp',
+      'system/maps.eapp',
+      'system/health.eapp'
     ];
 
     const loaded: EApp[] = [];
