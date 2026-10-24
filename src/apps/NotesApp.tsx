@@ -47,7 +47,7 @@ const NotesApp: React.FC = () => {
 
   if (selectedNote) {
     return (
-      <div className="w-full h-full bg-black pt-16 flex flex-col">
+      <div className="w-full h-full bg-black pt-2 flex flex-col">
         <div className="flex items-center justify-between px-4 mb-4">
           <button onClick={saveNote} className="text-blue-400 text-sm">← Заметки</button>
           <button onClick={() => deleteNote(selectedNote.id)} className="text-red-400 text-sm">Удалить</button>
@@ -77,7 +77,7 @@ const NotesApp: React.FC = () => {
   }
 
   return (
-    <div className="w-full h-full bg-black pt-16 overflow-y-auto pb-20">
+    <div className="w-full h-full bg-black pt-2 overflow-y-auto pb-20">
       <div className="px-4 mb-4">
         <h1 className="text-white text-2xl font-bold">Заметки</h1>
         <div className="bg-gray-800 rounded-xl px-4 py-2 flex items-center gap-2 mt-3">

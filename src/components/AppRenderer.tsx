@@ -1,4 +1,5 @@
 import React from 'react';
+import { useAppContext } from '../context/AppContext';
 import SnakeGame from '../apps/SnakeGame';
 import TetrisGame from '../apps/TetrisGame';
 import Game2048 from '../apps/Game2048';
@@ -23,6 +24,10 @@ interface AppRendererProps {
 }
 
 const AppRenderer: React.FC<AppRendererProps> = ({ appName, onClose }) => {
+  const { settings } = useAppContext();
+
+  const paddingTop = settings.phoneModel === 'iphone8' ? '36px' : settings.phoneModel === 'iphonex' ? '52px' : '54px';
+
   const renderApp = () => {
     switch (appName) {
       case 'snake': return <SnakeGame />;
@@ -47,16 +52,18 @@ const AppRenderer: React.FC<AppRendererProps> = ({ appName, onClose }) => {
 
   return (
     <div className="w-full h-full animate-slide-up relative">
-      {/* App Header Bar */}
-      <div className="absolute top-12 left-0 right-0 z-50 flex justify-center">
+      {/* App Header Bar - below status bar */}
+      <div className="absolute left-0 right-0 z-50 flex justify-center" style={{ top: paddingTop }}>
         <button
           onClick={onClose}
-          className="px-4 py-1 bg-white/20 backdrop-blur-md rounded-full text-white text-xs font-medium active:scale-90 transition-transform"
+          className="px-4 py-1.5 bg-black/40 backdrop-blur-md rounded-full text-white text-xs font-medium active:scale-90 transition-transform border border-white/10"
         >
           ← Домой
         </button>
       </div>
-      {renderApp()}
+      <div style={{ paddingTop }}>
+        {renderApp()}
+      </div>
     </div>
   );
 };

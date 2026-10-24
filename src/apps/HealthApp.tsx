@@ -19,7 +19,7 @@ const HealthApp: React.FC = () => {
   const days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
   return (
-    <div className="w-full h-full bg-black pt-16 overflow-y-auto pb-20">
+    <div className="w-full h-full bg-black pt-2 overflow-y-auto pb-20">
       <div className="px-4 mb-4">
         <h1 className="text-white text-2xl font-bold">❤️ Здоровье</h1>
       </div>

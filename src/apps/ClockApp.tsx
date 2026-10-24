@@ -47,7 +47,7 @@ const ClockApp: React.FC = () => {
   };
 
   return (
-    <div className="w-full h-full bg-black pt-16 flex flex-col">
+    <div className="w-full h-full bg-black pt-2 flex flex-col">
       {/* Tabs */}
       <div className="flex border-b border-gray-800 px-2">
         {(['world', 'alarm', 'stopwatch', 'timer'] as const).map(t => (

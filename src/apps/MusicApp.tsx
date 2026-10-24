@@ -46,7 +46,7 @@ const MusicApp: React.FC = () => {
 
   if (showPlayer) {
     return (
-      <div className={`w-full h-full bg-gradient-to-b ${currentSong.color} pt-16 flex flex-col items-center px-6`}>
+      <div className={`w-full h-full bg-gradient-to-b ${currentSong.color} pt-2 flex flex-col items-center px-6`}>
         <button onClick={() => setShowPlayer(false)} className="self-start text-white/70 text-sm mb-8">↓ Свернуть</button>
         
         <div className={`w-56 h-56 rounded-2xl bg-gradient-to-br ${currentSong.color} shadow-2xl flex items-center justify-center text-7xl mb-8 border border-white/20`}>
@@ -92,7 +92,7 @@ const MusicApp: React.FC = () => {
   }
 
   return (
-    <div className="w-full h-full bg-gradient-to-b from-gray-900 to-black pt-16 overflow-y-auto pb-20">
+    <div className="w-full h-full bg-gradient-to-b from-gray-900 to-black pt-2 overflow-y-auto pb-20">
       <div className="px-4 mb-4">
         <h1 className="text-white text-2xl font-bold">🎵 Музыка</h1>
       </div>

@@ -48,9 +48,8 @@ const AppStoreApp: React.FC = () => {
 
   if (selectedApp) {
     return (
-      <div className="w-full h-full bg-black pt-16 px-4 overflow-y-auto pb-20">
-        <button onClick={() => setSelectedApp(null)} className="text-blue-400 text-sm mb-4">← Назад</button>
-        <div className="flex items-center gap-4 mb-6">
+<div className="w-full h-full bg-black pt-2 px-4 overflow-y-auto pb-20">
+      <button onClick={() => setSelectedApp(null)} className="text-blue-400 text-sm mb-4">← Назад</button>        <div className="flex items-center gap-4 mb-6">
           <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${selectedApp.color} flex items-center justify-center text-4xl shadow-lg`}>
             {selectedApp.icon}
           </div>
@@ -93,9 +92,9 @@ const AppStoreApp: React.FC = () => {
   }
 
   return (
-    <div className="w-full h-full bg-black pt-16 overflow-y-auto pb-20">
+    <div className="w-full h-full bg-black pt-2 overflow-y-auto pb-20">
       <div className="px-4 mb-4">
-        <h1 className="text-white text-2xl font-bold mb-4">App Store</h1>
+        <h1 className="text-white text-2xl font-bold mb-4">Магазин</h1>
 
         {/* Search */}
         <div className="bg-gray-800 rounded-xl px-4 py-2 flex items-center gap-2 mb-4">

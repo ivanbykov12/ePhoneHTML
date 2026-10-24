@@ -94,7 +94,7 @@ const CalculatorApp: React.FC = () => {
   };
 
   return (
-    <div className="w-full h-full bg-black flex flex-col pt-16 px-4">
+    <div className="w-full h-full bg-black flex flex-col pt-2 px-4">
       <div className="flex-1 flex items-end justify-end pb-4">
         <span className="text-white text-5xl font-light truncate">{display}</span>
       </div>

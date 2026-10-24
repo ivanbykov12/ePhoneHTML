@@ -1,5 +1,7 @@
 import React, { createContext, useContext } from 'react';
 
+export type PhoneModel = 'iphone8' | 'iphonex' | 'iphone14';
+
 export interface SystemSettings {
   wallpaper: string;
   darkMode: boolean;
@@ -11,6 +13,8 @@ export interface SystemSettings {
   accentColor: string;
   language: string;
   name: string;
+  phoneModel: PhoneModel;
+  disableIsland: boolean;
 }
 
 export const defaultSettings: SystemSettings = {
@@ -23,7 +27,9 @@ export const defaultSettings: SystemSettings = {
   sound: true,
   accentColor: '#007AFF',
   language: 'Русский',
-  name: 'iPhone',
+  name: 'ePhone',
+  phoneModel: 'iphone14',
+  disableIsland: false,
 };
 
 interface AppContextType {

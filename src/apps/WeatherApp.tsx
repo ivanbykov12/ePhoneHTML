@@ -17,7 +17,7 @@ const WeatherApp: React.FC = () => {
   const temp = unit === 'C' ? data.temp : Math.round(data.temp * 9/5 + 32);
 
   return (
-    <div className="w-full h-full bg-gradient-to-b from-blue-600 to-blue-900 pt-16 px-4 overflow-y-auto pb-20">
+    <div className="w-full h-full bg-gradient-to-b from-blue-600 to-blue-900 pt-2 px-4 overflow-y-auto pb-20">
       <div className="text-center mb-6">
         <h1 className="text-white text-2xl font-light">{city}</h1>
         <div className="text-white text-6xl font-thin my-2">{temp}°{unit}</div>
