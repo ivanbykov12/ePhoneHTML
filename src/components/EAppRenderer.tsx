@@ -27,7 +27,6 @@ const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
     const iframe = document.createElement('iframe');
     iframe.style.cssText = 'width: 100%; height: 100%; border: none; background: transparent;';
     iframe.sandbox.add('allow-scripts');
-    iframe.sandbox.add('allow-same-origin');
     
     containerRef.current.innerHTML = '';
     containerRef.current.appendChild(iframe);
