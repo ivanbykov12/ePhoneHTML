@@ -363,7 +363,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
       </div>
 
       {/* Dock */}
-      <div className="mx-4 mb-4 px-4 py-3 backdrop-blur-xl bg-white/10 border border-white/20 rounded-[22px]">
+      <div className="mx-4 mb-20 px-4 py-3 backdrop-blur-xl bg-white/10 border border-white/20 rounded-[22px]">
         <div className="flex justify-around">
           {['safari_system', 'messages_system', 'music_system', 'appstore_system'].map(appId => {
             const app = systemEApps.find(a => a.id === appId);
