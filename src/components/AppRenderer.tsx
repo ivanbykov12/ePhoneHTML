@@ -11,14 +11,12 @@ interface AppRendererProps {
 const AppRenderer: React.FC<AppRendererProps> = ({ appName }) => {
   const { settings, customApps } = useAppContext();
   const paddingTop = getStatusBarPadding(settings.phoneModel);
-
-  // Все приложения теперь .eapp
   const app = customApps.find(a => a.id === appName);
 
   if (!app) {
     return (
       <div className="w-full h-full flex items-center justify-center text-white" style={{ paddingTop }}>
-        Приложение не найдено: {appName}
+        Приложение не найдено
       </div>
     );
   }
