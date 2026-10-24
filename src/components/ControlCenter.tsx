@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useAppContext } from '../context/AppContext';
-import { Wifi, Bluetooth, Plane, Moon, Sun, Volume2, VolumeX, Flashlight, Camera, Calculator, Timer, X } from 'lucide-react';
+import { useAppContext, PhoneModel } from '../context/AppContext';
+import { Wifi, Bluetooth, Plane, Moon, Sun, Volume2, Flashlight, Camera, Calculator, Timer, X, RotateCcw } from 'lucide-react';
 
 const ControlCenter: React.FC = () => {
   const { settings, setSettings, showControlCenter, setShowControlCenter } = useAppContext();
@@ -12,24 +12,35 @@ const ControlCenter: React.FC = () => {
   const [brightness, setBrightness] = useState(settings.brightness);
   const [volume, setVolume] = useState(70);
   const [musicPlaying, setMusicPlaying] = useState(false);
-  const [isClosing, setIsClosing] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
     setSettings(s => ({ ...s, darkMode, brightness }));
   }, [darkMode, brightness]);
 
   const handleClose = () => {
-    setIsClosing(true);
+    setIsAnimating(true);
     setTimeout(() => {
       setShowControlCenter(false);
-      setIsClosing(false);
+      setIsAnimating(false);
     }, 300);
   };
 
-  if (!showControlCenter) return null;
+  if (!showControlCenter && !isAnimating) return null;
+
+  // Для iPhone 8 - открытие снизу
+  const isIPhone8 = settings.phoneModel === 'iphone8';
+  
+  const animationClass = isAnimating 
+    ? (isIPhone8 ? 'animate-slide-down' : 'animate-fade-out')
+    : (isIPhone8 ? 'animate-slide-up' : 'animate-fade-in');
+
+  const positionClass = isIPhone8 
+    ? 'bottom-0 top-auto rounded-t-3xl' 
+    : 'top-0 right-0 rounded-bl-3xl';
 
   return (
-    <div className={`absolute inset-0 z-[100] ${isClosing ? 'animate-fade-out' : 'animate-fade-in'}`}>
+    <div className={`absolute inset-0 z-[100] ${animationClass}`}>
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
@@ -37,11 +48,11 @@ const ControlCenter: React.FC = () => {
       />
       
       {/* Control Center Panel */}
-      <div className="absolute top-0 right-0 w-full h-full bg-gray-900/95 backdrop-blur-2xl rounded-t-3xl p-4 pt-12 overflow-y-auto">
+      <div className={`absolute ${positionClass} w-full ${isIPhone8 ? 'h-[70%]' : 'h-full'} bg-gray-900/95 backdrop-blur-2xl p-4 pt-12 overflow-y-auto`}>
         {/* Close Button */}
         <button
           onClick={handleClose}
-          className="absolute top-4 right-4 w-8 h-8 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"
+          className="absolute top-4 right-4 w-8 h-8 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors z-10"
         >
           <X className="w-5 h-5 text-white" />
         </button>
@@ -164,9 +175,7 @@ const ControlCenter: React.FC = () => {
           <div className="bg-white/10 rounded-2xl p-4">
             <button className="flex items-center gap-3 text-white w-full">
               <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
+                <RotateCcw className="w-5 h-5" />
               </div>
               <span className="text-sm">Портретная ориентация</span>
             </button>

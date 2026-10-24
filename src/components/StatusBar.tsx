@@ -51,8 +51,8 @@ const StatusBar: React.FC<StatusBarProps> = ({ time, model, onSwipeDown }) => {
     return (
       <div
         ref={statusBarRef}
-        className="absolute top-0 left-0 right-0 z-40 flex justify-between items-center px-4"
-        style={{ height: '90px', paddingTop: '20px' }}
+        className="absolute top-0 left-0 right-0 z-40 flex justify-between items-center px-6"
+        style={{ height: '80px', paddingTop: '25px' }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -92,13 +92,13 @@ const StatusBar: React.FC<StatusBarProps> = ({ time, model, onSwipeDown }) => {
   }
 
   // iPhone X, 14: стандартный layout
-  const paddingTop = model === 'iphonex' ? '10px' : '14px';
+  const paddingTop = model === 'iphonex' ? '15px' : '14px';
 
   return (
     <div
       ref={statusBarRef}
-      className="absolute top-0 left-0 right-0 z-40 flex justify-between items-center px-8"
-      style={{ paddingTop, height: model === 'iphonex' ? '44px' : '54px' }}
+      className="absolute top-0 left-0 right-0 z-40 flex justify-between items-center px-6"
+      style={{ paddingTop, height: model === 'iphonex' ? '50px' : '54px' }}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}

@@ -57,8 +57,8 @@ function App() {
           width: '375px',
           height: '667px',
           borderRadius: '40px',
-          topBezel: '90px', // Большая верхняя рамка
-          bottomBezel: '90px', // Большая нижняя рамка
+          topBezel: '80px', // Большая верхняя рамка
+          bottomBezel: '80px', // Большая нижняя рамка
           statusBarHeight: '20px',
           contentPaddingTop: '20px',
         };
