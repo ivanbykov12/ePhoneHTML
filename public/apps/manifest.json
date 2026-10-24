@@ -4,6 +4,7 @@
     "catch_star.eapp",
     "reaction_test.eapp",
     "telegram_example.eapp",
+    "telegram_v2.eapp",
     "system/snake.eapp",
     "system/tetris.eapp",
     "system/game2048.eapp",

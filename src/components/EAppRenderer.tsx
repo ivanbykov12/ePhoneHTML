@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { EApp, useAppContext, PhoneModel } from '../context/AppContext';
+import { EApp, EAppV2, useAppContext, PhoneModel, getEAppVersion } from '../context/AppContext';
 
 interface EAppRendererProps {
   app: EApp;
@@ -7,9 +7,13 @@ interface EAppRendererProps {
 
 const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { settings, setSettings, customApps } = useAppContext();
+  const { settings, setSettings } = useAppContext();
   const [showCompatibilityModal, setShowCompatibilityModal] = useState(false);
   const [appReady, setAppReady] = useState(false);
+  
+  const appVersion = getEAppVersion(app);
+  const isV2 = appVersion === '1.1';
+  const appV2 = isV2 ? (app as EAppV2) : null;
 
   useEffect(() => {
     if (app.supportedModels && app.supportedModels.length > 0) {
@@ -40,6 +44,7 @@ const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
     const ePhoneAPI = `
       <script>
         window.ePhone = {
+          version: '${appVersion}',
           getScreenSize: () => ({ width: 390, height: 700 }),
           vibrate: (pattern) => {
             if (navigator.vibrate) navigator.vibrate(pattern);
@@ -65,10 +70,62 @@ const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
           },
           switchModel: (model) => {
             window.parent.postMessage({ type: 'switchModel', model: model }, '*');
+          },
+          getAppInfo: () => {
+            return {
+              id: '${app.id}',
+              name: '${app.name}',
+              version: '${appVersion}',
+              author: '${app.author || 'Unknown'}'
+            };
           }
         };
       </script>
     `;
+
+    // Подготовка внешних библиотек для v1.1
+    let externalLibsHTML = '';
+    if (isV2 && appV2?.externalLibs) {
+      if (appV2.externalLibs.css) {
+        externalLibsHTML += appV2.externalLibs.css.map(url => 
+          `<link rel="stylesheet" href="${url}">`
+        ).join('\n');
+      }
+      if (appV2.externalLibs.js) {
+        externalLibsHTML += appV2.externalLibs.js.map(url => 
+          `<script src="${url}"><\/script>`
+        ).join('\n');
+      }
+    }
+
+    // Кастомные стили для v1.1
+    let customStyleHTML = '';
+    if (isV2 && appV2?.style) {
+      customStyleHTML = `<style>${appV2.style}</style>`;
+    }
+
+    // Фон приложения для v1.1
+    let backgroundStyle = settings.darkMode ? '#000' : '#fff';
+    if (isV2 && appV2?.background) {
+      backgroundStyle = appV2.background;
+    }
+
+    // Ориентация для v1.1
+    let orientationStyle = '';
+    if (isV2 && appV2?.orientation === 'landscape') {
+      orientationStyle = `
+        body {
+          transform: rotate(90deg);
+          transform-origin: left top;
+          width: 100vh;
+          height: 100vw;
+          overflow-x: hidden;
+          position: absolute;
+          top: 100%;
+          left: 0;
+        }
+      `;
+    }
 
     const html = `
       <!DOCTYPE html>
@@ -78,12 +135,13 @@ const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+        ${externalLibsHTML}
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
           body { 
             font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
             overflow-x: hidden;
-            background: ${settings.darkMode ? '#000' : '#fff'};
+            background: ${backgroundStyle};
             color: ${settings.darkMode ? '#fff' : '#000'};
           }
           .material-icons, .material-symbols-outlined {
@@ -103,7 +161,9 @@ const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
           * {
             -webkit-overflow-scrolling: touch;
           }
+          ${orientationStyle}
         </style>
+        ${customStyleHTML}
         ${ePhoneAPI}
       </head>
       <body>
@@ -133,7 +193,7 @@ const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
     return () => {
       window.removeEventListener('message', handleMessage);
     };
-  }, [app, appReady, settings, setSettings]);
+  }, [app, appReady, settings, setSettings, isV2, appV2, appVersion]);
 
   const handleSwitchModel = (model: PhoneModel) => {
     setSettings(s => ({

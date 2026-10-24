@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAppContext, getStatusBarPadding, EApp } from '../context/AppContext';
+import { useAppContext, getStatusBarPadding, EApp, getEAppVersion } from '../context/AppContext';
 import { FolderOpen, Upload, Download, Trash2 } from 'lucide-react';
 
 interface HomeScreenProps {
@@ -57,14 +57,19 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
   const renderAppIcon = (app: EApp) => {
     const isMaterial = app.icon?.startsWith('material:');
     const iconContent = isMaterial ? app.icon.replace('material:', '') : (app.icon || '📱');
+    const eappVersion = getEAppVersion(app);
     
     return (
-      <div className={`w-14 h-14 rounded-[14px] bg-gradient-to-br ${app.color || 'from-gray-400 to-gray-600'} flex items-center justify-center shadow-lg`}>
+      <div className={`w-14 h-14 rounded-[14px] bg-gradient-to-br ${app.color || 'from-gray-400 to-gray-600'} flex items-center justify-center shadow-lg relative`}>
         {isMaterial ? (
           <span className="material-icons text-white text-2xl">{iconContent}</span>
         ) : (
           <span className="text-2xl">{iconContent}</span>
         )}
+        {/* Версия .eapp */}
+        <div className="absolute -bottom-1 -right-1 px-1 py-0.5 bg-black/70 rounded text-[7px] text-white font-bold">
+          v{eappVersion}
+        </div>
       </div>
     );
   };

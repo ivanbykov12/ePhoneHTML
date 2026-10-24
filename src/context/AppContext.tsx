@@ -10,7 +10,8 @@ export const getStatusBarPadding = (model: PhoneModel): string => {
   }
 };
 
-export interface EApp {
+// EApp v1.0 - старая версия (обратная совместимость)
+export interface EAppV1 {
   id: string;
   name: string;
   icon: string;
@@ -18,17 +19,82 @@ export interface EApp {
   version?: string;
   author?: string;
   description?: string;
-  code: string;
   supportedModels?: PhoneModel[];
   isSystem?: boolean;
   changelog?: string;
+  code: string;
 }
 
-export interface LockScreenWidget {
+// EApp v1.1 - новая версия с расширенными возможностями
+export interface EAppV2 {
   id: string;
-  type: 'weather' | 'battery' | 'calendar' | 'fitness' | 'clock' | 'music';
-  position: 'top' | 'bottom-left' | 'bottom-right';
+  name: string;
+  icon: string;
+  color: string;
+  version?: string;
+  author?: string;
+  description?: string;
+  supportedModels?: PhoneModel[];
+  isSystem?: boolean;
+  changelog?: string;
+  code: string;
+  
+  // Новые возможности v1.1
+  eappVersion?: '1.0' | '1.1';
+  
+  // Кастомные стили (не зависят от темы сайта)
+  style?: string;
+  
+  // Фон приложения
+  background?: string;
+  
+  // Ориентация
+  orientation?: 'portrait' | 'landscape' | 'auto';
+  
+  // Полноэкранный режим
+  fullscreen?: boolean;
+  
+  // Внешние библиотеки
+  externalLibs?: {
+    css?: string[];
+    js?: string[];
+  };
+  
+  // Разрешения
+  permissions?: {
+    vibration?: boolean;
+    notifications?: boolean;
+    camera?: boolean;
+    location?: boolean;
+    storage?: boolean;
+  };
+  
+  // Метаданные
+  metadata?: {
+    category?: string;
+    tags?: string[];
+    minOS?: string;
+    website?: string;
+    email?: string;
+  };
+  
+  // Настройки запуска
+  launchConfig?: {
+    splashScreen?: boolean;
+    splashDuration?: number;
+    animation?: 'fade' | 'slide' | 'zoom' | 'none';
+  };
 }
+
+export type EApp = EAppV1 | EAppV2;
+
+// Проверка версии .eapp
+export const getEAppVersion = (app: EApp): '1.0' | '1.1' => {
+  if ('eappVersion' in app && app.eappVersion === '1.1') {
+    return '1.1';
+  }
+  return '1.0';
+};
 
 export interface SystemSettings {
   wallpaper: string;
@@ -46,6 +112,12 @@ export interface SystemSettings {
   lockScreenWidgets: LockScreenWidget[];
   lockScreenFont: string;
   controlCenterEnabled: boolean;
+}
+
+export interface LockScreenWidget {
+  id: string;
+  type: 'weather' | 'battery' | 'calendar' | 'fitness' | 'clock' | 'music';
+  position: 'top' | 'bottom-left' | 'bottom-right';
 }
 
 export const defaultSettings: SystemSettings = {
