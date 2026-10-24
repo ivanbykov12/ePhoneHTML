@@ -37,6 +37,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
   const gridApps = apps.filter(a => !dockApps.includes(a.id));
   const [showCustomApps, setShowCustomApps] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
+  
+  // Разделяем системные и пользовательские .eapp приложения
+  const systemEApps = customApps.filter(app => app.isSystem);
+  const userEApps = customApps.filter(app => !app.isSystem);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -119,17 +123,17 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
 
         {/* Custom Apps List */}
         <div className="flex-1 px-4 overflow-y-auto">
-          {customApps.length === 0 ? (
+          {userEApps.length === 0 ? (
             <div className="text-center py-20">
               <FolderOpen className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-400 text-sm">Нет установленных приложений</p>
+              <p className="text-gray-400 text-sm">Нет пользовательских приложений</p>
               <p className="text-gray-500 text-xs mt-2">
                 Добавьте .eapp файлы в папку<br/>public/apps/ или загрузите через кнопку ↑
               </p>
             </div>
           ) : (
             <div className="space-y-3">
-              {customApps.map(app => (
+              {userEApps.map(app => (
                 <div
                   key={app.id}
                   className="bg-gray-800 rounded-xl p-3 flex items-center gap-3"
@@ -170,7 +174,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
           {/* Info */}
           <div className="mt-6 bg-gray-800/50 rounded-xl p-4">
             <p className="text-gray-400 text-xs">
-              💡 <span className="text-gray-300 font-medium">Совет:</span> Положите .eapp файлы в папку <code className="bg-gray-700 px-1 rounded">public/apps/</code> и перезагрузите страницу
+              💡 <span className="text-gray-300 font-medium">Совет:</span> Системные приложения находятся в <code className="bg-gray-700 px-1 rounded">public/apps/system/</code>. Пользовательские - в <code className="bg-gray-700 px-1 rounded">public/apps/</code>
             </p>
           </div>
         </div>
@@ -198,6 +202,39 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
             </div>
           ))}
 
+          {/* Системные .eapp приложения */}
+          {systemEApps.length > 0 && (
+            <>
+              <div className="col-span-4 mt-4 mb-2">
+                <div className="text-white/60 text-xs font-medium uppercase tracking-wider">
+                  Системные приложения
+                </div>
+              </div>
+              {systemEApps.map(app => (
+                <div
+                  key={app.id}
+                  className="flex flex-col items-center app-icon cursor-pointer relative"
+                  onClick={() => onOpenApp(app.id)}
+                >
+                  <div className={`w-14 h-14 rounded-[14px] bg-gradient-to-br ${app.color || 'from-gray-400 to-gray-600'} flex items-center justify-center shadow-lg`}>
+                    {app.icon?.startsWith('material:') ? (
+                      <span className="material-icons text-white text-2xl">{app.icon.replace('material:', '')}</span>
+                    ) : (
+                      <span className="text-2xl">{app.icon || '📱'}</span>
+                    )}
+                    {/* Индикатор системного приложения */}
+                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center border-2 border-black">
+                      <span className="text-white text-[8px] font-bold">S</span>
+                    </div>
+                  </div>
+                  <span className="text-white text-[10px] mt-1 text-center leading-tight truncate w-16">
+                    {app.name}
+                  </span>
+                </div>
+              ))}
+            </>
+          )}
+
           {/* Custom Apps Folder */}
           <div
             className="flex flex-col items-center app-icon cursor-pointer"
@@ -205,9 +242,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
           >
             <div className="w-14 h-14 rounded-[14px] bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg relative">
               <FolderOpen className="w-7 h-7 text-white" strokeWidth={1.8} />
-              {customApps.length > 0 && (
+              {userEApps.length > 0 && (
                 <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-[9px] font-bold">{customApps.length}</span>
+                  <span className="text-white text-[9px] font-bold">{userEApps.length}</span>
                 </div>
               )}
             </div>

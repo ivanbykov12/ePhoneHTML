@@ -1,80 +1,96 @@
-# 📱 ePhone Simulator v3.0 - Полное руководство
+# 📱 ePhone Simulator - Полное руководство по .eapp
 
-## ✅ Новые возможности:
+## 📂 Где находятся системные .eapp?
 
-### 🎨 Темы и дизайн:
-- **Светлая/Тёмная тема** - переключается в настройках и Control Center
-- **Material Icons** - поддержка Google Material иконок
-- **6 обоев** - включая светлый вариант
-- **Настраиваемые цвета акцента** - 6 вариантов
+Системные приложения находятся в папке **`public/apps/system/`**:
 
-### 🎛 Control Center:
-- Свайп вниз от статусбара для открытия
-- Быстрые переключатели: Wi-Fi, Bluetooth, авиарежим
-- Переключение темы
-- Яркость и громкость
-- Фонарик, таймер, калькулятор, камера
+```
+public/apps/system/
+├── snake.eapp         # 🐍 Змейка
+├── tetris.eapp        # 🧱 Тетрис
+├── game2048.eapp      # 🔢 2048
+├── calculator.eapp    # 🔢 Калькулятор
+├── clock.eapp         # ⏰ Часы
+└── weather.eapp       # 🌤 Погода
+```
 
-### 📱 Модели телефонов:
-- **ePhone 8** - классический с кнопкой (375x667)
-- **ePhone X** - безрамочный с чёлкой (375x812)
-- **ePhone 14** - Dynamic Island (390x844)
+## 🏛 Что такое системные приложения?
 
-### 🔒 Lock Screen:
-- Редактируемые виджеты (погода, батарея, календарь, фитнес, часы, музыка)
-- Настраиваемый шрифт
-- Свайп вверх для разблокировки
+Системные приложения:
+- Находятся в `public/apps/system/`
+- Помечены флагом `"isSystem": true`
+- Отображаются на рабочем столе с синей буквой **"S"** в углу иконки
+- Могут быть отредактированы как обычные .eapp файлы
+- Загружаются автоматически при старте
 
-### 🎮 Система .eapp:
-- Пользовательские приложения в формате JSON
-- Проверка совместимости с моделями
-- Поддержка Material Icons
-- API для сохранения данных
-- Загрузка через UI или папку public/apps/
+## 📝 Как редактировать системное приложение?
 
-## 📄 Формат .eapp:
+1. Открой файл в `public/apps/system/` (например `snake.eapp`)
+2. Редактируй в Notepad++ или VS Code
+3. Сохрани файл
+4. Перезагрузи страницу в браузере
+5. Изменения применятся!
+
+## ⚠️ Важно при редактировании
+
+- Создавай резервные копии перед изменением
+- Системные приложения имеют сложную логику
+- Не удаляй обязательные поля: `id`, `name`, `icon`, `code`
+- Тестируй изменения перед публикацией
+
+## 📄 Структура .eapp файла
 
 ```json
 {
-  "id": "my_app",
-  "name": "Моё Приложение",
-  "icon": "material:gamepad",
-  "color": "from-purple-500 to-pink-500",
+  "id": "snake_system",
+  "name": "Змейка",
+  "icon": "material:catching_pokemon",
+  "color": "from-green-400 to-green-600",
   "version": "1.0.0",
-  "author": "Ваше Имя",
-  "description": "Описание",
+  "author": "ePhone System",
+  "description": "Классическая игра Змейка",
   "supportedModels": ["iphone8", "iphonex", "iphone14"],
-  "isSystem": false,
-  "changelog": "Версия 1.0",
-  "code": "<div>HTML</div><style>CSS</style><script>JS</script>"
+  "isSystem": true,
+  "changelog": "Системное приложение",
+  "code": "<div>...</div><style>...</style><script>...</script>"
 }
 ```
 
-## 🎮 API:
+## 🎮 API для приложений
 
 ```javascript
-ePhone.getScreenSize()     // { width: 390, height: 844 }
-ePhone.getSettings()       // настройки (тема, модель, и т.д.)
-ePhone.getModel()          // текущая модель
-ePhone.vibrate(pattern)    // вибрация
-ePhone.save(key, value)    // сохранить данные
-ePhone.load(key)           // загрузить данные
-ePhone.closeApp()          // закрыть приложение
+// Получить настройки
+const settings = ePhone.getSettings();
+settings.darkMode      // true/false
+settings.phoneModel    // 'iphone8' | 'iphonex' | 'iphone14'
+
+// Получить модель
+const model = ePhone.getModel();
+
+// Сохранить/загрузить данные
+ePhone.save('highscore', 1000);
+const score = ePhone.load('highscore');
+
+// Вибрация
+ePhone.vibrate(200);
+
+// Закрыть приложение
+ePhone.closeApp();
 ```
 
-## 🎨 Material Icons:
+## 🎨 Material Icons
 
+Используй Material Icons в коде:
 ```html
 <span class="material-icons">gamepad</span>
-<span class="material-symbols-outlined">settings</span>
 ```
 
-Или в иконке:
+Или в иконке приложения:
 ```json
 { "icon": "material:gamepad" }
 ```
 
-## 🌗 Поддержка тем:
+## 🌗 Поддержка тем
 
 ```javascript
 const settings = ePhone.getSettings();
@@ -84,49 +100,64 @@ document.body.style.background = isDark ? '#000' : '#fff';
 document.body.style.color = isDark ? '#fff' : '#000';
 ```
 
-## 📱 Проверка совместимости:
+## 📱 Проверка совместимости
 
-Если приложение оптимизировано только для определённых моделей:
 ```json
 {
   "supportedModels": ["iphone8", "iphonex"]
 }
 ```
 
-Пользователю будет предложено переключиться на совместимую модель.
+Если приложение не поддерживает текущую модель, пользователю будет предложено переключиться.
 
-## 📂 Структура файлов:
+## 🚀 Создание своего приложения
 
-```
-public/apps/
-├── manifest.json          # Список .eapp файлов
-├── template.eapp          # Шаблон
-├── catch_star.eapp        # Игра
-├── reaction_test.eapp     # Тест
-├── README.md              # Документация
-└── PROMPT_FOR_AI.md       # Промпт для ИИ
-```
-
-## 🚀 Как добавить приложение:
-
-1. Создай `my_game.eapp` в `public/apps/`
-2. Напиши JSON (смотри template.eapp)
-3. Добавь в `manifest.json`
+1. Создай файл `my_app.eapp` в `public/apps/`
+2. Напиши JSON с кодом
+3. Добавь `"my_app.eapp"` в `manifest.json`
 4. Перезагрузи страницу
+5. Приложение появится в папке Custom Apps!
 
-Или загрузи через UI в Custom Apps.
+## 💡 Примеры системных .eapp
 
-## 💡 Советы:
+### Змейка (snake.eapp)
+- Canvas-based игра
+- Сохранение рекорда через `ePhone.save()`
+- Поддержка тёмной/светлой темы
+- Material Icons для кнопок
 
-- Используй Material Icons
-- Поддерживай обе темы
-- Указывай supportedModels
-- Сохраняй прогресс через ePhone.save()
-- Редактируй в Notepad++ или VS Code
+### Тетрис (tetris.eapp)
+- Классический Тетрис на Canvas
+- Система очков и рекордов
+- Адаптивные цвета под тему
 
-## ⚠️ Системные приложения:
+### 2048 (game2048.eapp)
+- Сетка 4x4 с анимациями
+- Сохранение лучшего счёта
+- Градиентные плитки
 
-Системные приложения (Змейка, Тетрис, Настройки и т.д.) нельзя конвертировать в .eapp
-потому что они потеряют функционал. Но их дизайн можно менять через настройки.
+### Калькулятор (calculator.eapp)
+- Полный функционал калькулятора
+- Поддержка всех операций
+- Стилизация под iOS
 
-Удачи! 🎉
+### Часы (clock.eapp)
+- Мировое время
+- Секундомер
+- Таймер
+- Будильники
+
+### Погода (weather.eapp)
+- 5 городов
+- Почасовой прогноз
+- Прогноз на неделю
+- Детали (ветер, влажность)
+
+## 📚 Дополнительные ресурсы
+
+- `public/apps/PROMPT_FOR_AI.md` - промпт для ИИ
+- `public/apps/template.eapp` - шаблон для создания приложений
+- `public/apps/catch_star.eapp` - пример игры
+- `public/apps/reaction_test.eapp` - пример утилиты
+
+Удачи в разработке! 🎉

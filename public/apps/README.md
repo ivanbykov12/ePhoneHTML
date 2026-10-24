@@ -10,6 +10,7 @@
 4. **Проверка совместимости** - приложения спрашивают разрешение на переключение модели
 5. **Редактируемый Lock Screen** - виджеты настраиваются в настройках
 6. **Все настройки работают** - все вкладки полностью функциональны
+7. **Системные .eapp** - все системные приложения теперь в формате .eapp!
 
 ### 📁 Структура .eapp файла:
 
@@ -111,12 +112,25 @@ document.body.style.color = isDark ? '#fff' : '#000';
 ```
 public/apps/
 ├── manifest.json          # Список загружаемых файлов
-├── template.eapp          # Шаблон с Material Icons и поддержкой тем
+├── template.eapp          # Шаблон
 ├── catch_star.eapp        # Игра "Поймай Звезду"
 ├── reaction_test.eapp     # Тест реакции
 ├── README.md              # Документация
-└── PROMPT_FOR_AI.md       # Промпт для ИИ (обновлён!)
+├── PROMPT_FOR_AI.md       # Промпт для ИИ
+└── system/                # Системные приложения
+    ├── snake.eapp         # Змейка
+    ├── tetris.eapp        # Тетрис
+    ├── game2048.eapp      # 2048
+    ├── calculator.eapp    # Калькулятор
+    ├── clock.eapp         # Часы
+    └── weather.eapp       # Погода
 ```
+
+### 🏛 Системные приложения:
+
+Системные приложения находятся в папке `public/apps/system/`. Они помечены флагом `isSystem: true` и отображаются на рабочем столе с синей буквой "S" в углу иконки.
+
+**Важно:** Системные приложения можно редактировать, но это может привести к потере функционала. Рекомендуется создавать копии перед изменением.
 
 ### 🚀 Как добавить приложение:
 
@@ -136,30 +150,6 @@ public/apps/
 
 ### ⚠️ Системные приложения:
 
-Системные приложения (Змейка, Тетрис, Настройки и т.д.) нельзя конвертировать в .eapp
-потому что они потеряют функционал. Но их дизайн можно менять через настройки.
-
-### 🎯 Примеры использования:
-
-**Простое приложение с Material Icons:**
-```json
-{
-  "id": "counter",
-  "name": "Счётчик",
-  "icon": "material:plus_one",
-  "color": "from-green-500 to-teal-500",
-  "code": "<div style='padding:20px;text-align:center;'><span class='material-icons' style='font-size:64px;' id='count'>0</span><br><button onclick='inc()' style='padding:20px;font-size:24px;'><span class='material-icons'>add</span></button></div><script>let c=0;function inc(){c++;document.getElementById('count').textContent=c;}</script>"
-}
-```
-
-**Приложение с поддержкой темы:**
-```json
-{
-  "id": "themed_app",
-  "name": "Тематическое",
-  "icon": "🎨",
-  "code": "<div id='app' style='padding:20px;'><h1>Привет!</h1></div><script>const s=ePhone.getSettings();const app=document.getElementById('app');app.style.background=s.darkMode?'#1a1a1a':'#f0f0f0';app.style.color=s.darkMode?'#fff':'#000';</script>"
-}
-```
+Системные приложения теперь в формате .eapp и находятся в `public/apps/system/`. Их можно редактировать, но с осторожностью - они помечены как `isSystem: true`.
 
 Удачи в разработке! 🎉

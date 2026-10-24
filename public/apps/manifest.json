@@ -2,7 +2,13 @@
   "apps": [
     "template.eapp",
     "catch_star.eapp",
-    "reaction_test.eapp"
+    "reaction_test.eapp",
+    "system/snake.eapp",
+    "system/tetris.eapp",
+    "system/game2048.eapp",
+    "system/calculator.eapp",
+    "system/clock.eapp",
+    "system/weather.eapp"
   ],
   "version": "3.0",
   "features": [
@@ -10,6 +16,7 @@
     "material_icons",
     "model_compatibility_check",
     "control_center",
-    "lock_screen_widgets"
+    "lock_screen_widgets",
+    "system_apps_in_eapp_format"
   ]
 }

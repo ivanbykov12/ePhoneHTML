@@ -28,14 +28,16 @@ const AppRenderer: React.FC<AppRendererProps> = ({ appName, onClose }) => {
   const { settings, customApps } = useAppContext();
   const paddingTop = getStatusBarPadding(settings.phoneModel);
 
-  // Проверяем является ли приложение кастомным
+  // Проверяем является ли приложение кастомным или системным .eapp
   const customApp = customApps.find(a => a.id === appName);
 
   const renderApp = () => {
+    // Если есть .eapp версия (системная или пользовательская), используем её
     if (customApp) {
       return <EAppRenderer app={customApp} />;
     }
 
+    // Иначе используем React версию (для приложений без .eapp)
     switch (appName) {
       case 'snake': return <SnakeGame />;
       case 'tetris': return <TetrisGame />;

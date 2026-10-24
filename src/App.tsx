@@ -102,6 +102,7 @@ function App() {
   // Загрузка .eapp файлов
   useEffect(() => {
     loadEApps();
+    loadSystemApps();
     // Загружаем сохранённые приложения из localStorage
     const saved = localStorage.getItem('customApps');
     if (saved) {
@@ -113,6 +114,39 @@ function App() {
       } catch {}
     }
   }, []);
+
+  // Загрузка системных приложений
+  const loadSystemApps = async () => {
+    const systemApps = [
+      'system/snake.eapp',
+      'system/tetris.eapp',
+      'system/game2048.eapp',
+      'system/calculator.eapp',
+      'system/clock.eapp',
+      'system/weather.eapp'
+    ];
+
+    const loaded: EApp[] = [];
+    for (const file of systemApps) {
+      try {
+        const response = await fetch(`/apps/${file}`);
+        if (response.ok) {
+          const appData = await response.json();
+          loaded.push(appData);
+        }
+      } catch (err) {
+        console.warn(`Failed to load system app ${file}:`, err);
+      }
+    }
+
+    if (loaded.length > 0) {
+      setCustomApps(prev => {
+        const existingIds = new Set(prev.map(a => a.id));
+        const newApps = loaded.filter(a => !existingIds.has(a.id));
+        return [...prev, ...newApps];
+      });
+    }
+  };
 
   // Сохраняем custom apps в localStorage
   useEffect(() => {
@@ -128,7 +162,17 @@ function App() {
       if (!manifestResponse.ok) {
         console.warn('Manifest not found, using defaults');
         // Fallback - загружаем стандартные файлы
-        const defaults = ['template.eapp', 'catch_star.eapp', 'reaction_test.eapp'];
+        const defaults = [
+          'template.eapp', 
+          'catch_star.eapp', 
+          'reaction_test.eapp',
+          'system/snake.eapp',
+          'system/tetris.eapp',
+          'system/game2048.eapp',
+          'system/calculator.eapp',
+          'system/clock.eapp',
+          'system/weather.eapp'
+        ];
         const loaded: EApp[] = [];
         for (const file of defaults) {
           try {
