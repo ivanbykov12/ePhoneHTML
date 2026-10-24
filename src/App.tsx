@@ -127,7 +127,6 @@ function App() {
           <div
             className="w-full h-full relative overflow-hidden"
             style={{
-              paddingTop: hasHomeButton ? frameConfig.topBezel : frameConfig.contentPaddingTop,
               paddingBottom: hasHomeButton ? frameConfig.bottomBezel : '0px',
             }}
           >

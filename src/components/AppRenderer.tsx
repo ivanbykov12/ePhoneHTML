@@ -1,4 +1,5 @@
 import React from 'react';
+import { useAppContext, getStatusBarPadding } from '../context/AppContext';
 import SnakeGame from '../apps/SnakeGame';
 import TetrisGame from '../apps/TetrisGame';
 import Game2048 from '../apps/Game2048';
@@ -23,6 +24,9 @@ interface AppRendererProps {
 }
 
 const AppRenderer: React.FC<AppRendererProps> = ({ appName }) => {
+  const { settings } = useAppContext();
+  const paddingTop = getStatusBarPadding(settings.phoneModel);
+
   const renderApp = () => {
     switch (appName) {
       case 'snake': return <SnakeGame />;
@@ -46,7 +50,7 @@ const AppRenderer: React.FC<AppRendererProps> = ({ appName }) => {
   };
 
   return (
-    <div className="w-full h-full animate-slide-up relative">
+    <div className="w-full h-full animate-slide-up relative" style={{ paddingTop }}>
       {renderApp()}
     </div>
   );

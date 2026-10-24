@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext, getStatusBarPadding } from '../context/AppContext';
 
 interface LockScreenProps {
   time: Date;
@@ -8,6 +8,7 @@ interface LockScreenProps {
 
 const LockScreen: React.FC<LockScreenProps> = ({ time, onUnlock }) => {
   const { settings } = useAppContext();
+  const paddingTop = getStatusBarPadding(settings.phoneModel);
   const [dragY, setDragY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [startY, setStartY] = useState(0);
@@ -67,7 +68,7 @@ const LockScreen: React.FC<LockScreenProps> = ({ time, onUnlock }) => {
   return (
     <div
       className={`w-full h-full bg-gradient-to-br ${getWallpaper()} flex flex-col items-center relative overflow-hidden`}
-      style={{ opacity }}
+      style={{ opacity, paddingTop }}
       onMouseDown={(e) => handleStart(e.clientY)}
       onMouseMove={(e) => handleMove(e.clientY)}
       onMouseUp={handleEnd}

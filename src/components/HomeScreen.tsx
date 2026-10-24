@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext, getStatusBarPadding } from '../context/AppContext';
 import {
   Bug, Gamepad2, Hash, Bird, Settings, ShoppingBag, Calculator,
   Clock, Cloud, StickyNote, Image, Music, Globe, MessageCircle,
@@ -33,6 +33,7 @@ const dockApps = ['safari', 'messages', 'music', 'appstore'];
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
   const { settings } = useAppContext();
+  const paddingTop = getStatusBarPadding(settings.phoneModel);
   const gridApps = apps.filter(a => !dockApps.includes(a.id));
 
   const getWallpaper = () => {
@@ -47,7 +48,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
   };
 
   return (
-    <div className={`w-full h-full bg-gradient-to-b ${getWallpaper()} flex flex-col`}>
+    <div className={`w-full h-full bg-gradient-to-b ${getWallpaper()} flex flex-col`} style={{ paddingTop }}>
       {/* App Grid */}
       <div className="flex-1 px-5 pt-4 overflow-y-auto">
         <div className="grid grid-cols-4 gap-y-5 gap-x-4">

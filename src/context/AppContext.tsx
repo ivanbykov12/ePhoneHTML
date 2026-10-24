@@ -2,6 +2,14 @@ import React, { createContext, useContext } from 'react';
 
 export type PhoneModel = 'iphone8' | 'iphonex' | 'iphone14';
 
+export const getStatusBarPadding = (model: PhoneModel): string => {
+  switch (model) {
+    case 'iphone8': return '90px';
+    case 'iphonex': return '44px';
+    case 'iphone14': return '54px';
+  }
+};
+
 export interface SystemSettings {
   wallpaper: string;
   darkMode: boolean;
