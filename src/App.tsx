@@ -21,6 +21,15 @@ function App() {
     return () => clearInterval(timer);
   }, []);
 
+  // Обработка закрытия .eapp приложений
+  useEffect(() => {
+    const handleCloseEApp = () => {
+      closeApp();
+    };
+    window.addEventListener('closeEApp', handleCloseEApp);
+    return () => window.removeEventListener('closeEApp', handleCloseEApp);
+  }, []);
+
   const openApp = (appName: string) => {
     setCurrentApp(appName);
     setIslandContent(appName);

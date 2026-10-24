@@ -1,21 +1,5 @@
 import React from 'react';
 import { useAppContext, getStatusBarPadding } from '../context/AppContext';
-import SnakeGame from '../apps/SnakeGame';
-import TetrisGame from '../apps/TetrisGame';
-import Game2048 from '../apps/Game2048';
-import FlappyBird from '../apps/FlappyBird';
-import SettingsApp from '../apps/SettingsApp';
-import AppStoreApp from '../apps/AppStoreApp';
-import CalculatorApp from '../apps/CalculatorApp';
-import ClockApp from '../apps/ClockApp';
-import WeatherApp from '../apps/WeatherApp';
-import NotesApp from '../apps/NotesApp';
-import PhotosApp from '../apps/PhotosApp';
-import MusicApp from '../apps/MusicApp';
-import SafariApp from '../apps/SafariApp';
-import MessagesApp from '../apps/MessagesApp';
-import MapsApp from '../apps/MapsApp';
-import HealthApp from '../apps/HealthApp';
 import EAppRenderer from './EAppRenderer';
 
 interface AppRendererProps {
@@ -24,44 +8,24 @@ interface AppRendererProps {
   onLock: () => void;
 }
 
-const AppRenderer: React.FC<AppRendererProps> = ({ appName, onClose }) => {
+const AppRenderer: React.FC<AppRendererProps> = ({ appName }) => {
   const { settings, customApps } = useAppContext();
   const paddingTop = getStatusBarPadding(settings.phoneModel);
 
-  // Проверяем является ли приложение кастомным или системным .eapp
-  const customApp = customApps.find(a => a.id === appName);
+  // Все приложения теперь .eapp
+  const app = customApps.find(a => a.id === appName);
 
-  const renderApp = () => {
-    // Если есть .eapp версия (системная или пользовательская), используем её
-    if (customApp) {
-      return <EAppRenderer app={customApp} />;
-    }
-
-    // Иначе используем React версию (для приложений без .eapp)
-    switch (appName) {
-      case 'snake': return <SnakeGame />;
-      case 'tetris': return <TetrisGame />;
-      case 'game2048': return <Game2048 />;
-      case 'flappy': return <FlappyBird />;
-      case 'settings': return <SettingsApp />;
-      case 'appstore': return <AppStoreApp />;
-      case 'calculator': return <CalculatorApp />;
-      case 'clock': return <ClockApp />;
-      case 'weather': return <WeatherApp />;
-      case 'notes': return <NotesApp />;
-      case 'photos': return <PhotosApp />;
-      case 'music': return <MusicApp />;
-      case 'safari': return <SafariApp />;
-      case 'messages': return <MessagesApp />;
-      case 'maps': return <MapsApp />;
-      case 'health': return <HealthApp />;
-      default: return <div className="w-full h-full flex items-center justify-center text-white">Приложение не найдено</div>;
-    }
-  };
+  if (!app) {
+    return (
+      <div className="w-full h-full flex items-center justify-center text-white" style={{ paddingTop }}>
+        Приложение не найдено: {appName}
+      </div>
+    );
+  }
 
   return (
     <div className="w-full h-full animate-slide-up relative" style={{ paddingTop }}>
-      {renderApp()}
+      <EAppRenderer app={app} />
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bug, Gamepad2, Hash, Bird, Settings, ShoppingBag, Calculator, Clock, Cloud, StickyNote, Image, Music, Globe, MessageCircle, Map, Heart } from 'lucide-react';
+import { useAppContext } from '../context/AppContext';
 
 interface DynamicIslandProps {
   content: string | null;
@@ -7,6 +7,7 @@ interface DynamicIslandProps {
 
 const DynamicIsland: React.FC<DynamicIslandProps> = ({ content }) => {
   const [expanded, setExpanded] = React.useState(false);
+  const { customApps } = useAppContext();
 
   React.useEffect(() => {
     if (content) {
@@ -16,51 +17,39 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ content }) => {
     }
   }, [content]);
 
-  const getAppIcon = (app: string) => {
-    const icons: Record<string, any> = {
-      snake: Bug,
-      tetris: Gamepad2,
-      game2048: Hash,
-      flappy: Bird,
-      settings: Settings,
-      appstore: ShoppingBag,
-      calculator: Calculator,
-      clock: Clock,
-      weather: Cloud,
-      notes: StickyNote,
-      photos: Image,
-      music: Music,
-      safari: Globe,
-      messages: MessageCircle,
-      maps: Map,
-      health: Heart,
-    };
-    return icons[app] || Settings;
-  };
-
-  const getAppName = (app: string): string => {
+  const getAppInfo = (appId: string) => {
+    const app = customApps.find(a => a.id === appId);
+    if (app) {
+      const isMaterial = app.icon?.startsWith('material:');
+      return {
+        name: app.name,
+        icon: isMaterial ? app.icon.replace('material:', '') : (app.icon || '📱'),
+        isMaterial: !!isMaterial,
+      };
+    }
+    
     const names: Record<string, string> = {
-      snake: 'Змейка',
-      tetris: 'Тетрис',
-      game2048: '2048',
-      flappy: 'Flappy Bird',
-      settings: 'Настройки',
-      appstore: 'Магазин',
-      calculator: 'Калькулятор',
-      clock: 'Часы',
-      weather: 'Погода',
-      notes: 'Заметки',
-      photos: 'Фото',
-      music: 'Музыка',
-      safari: 'Браузер',
-      messages: 'Чаты',
-      maps: 'Карты',
-      health: 'Здоровье',
+      snake_system: 'Змейка',
+      tetris_system: 'Тетрис',
+      game2048_system: '2048',
+      flappy_system: 'Flappy Bird',
+      settings_system: 'Настройки',
+      appstore_system: 'Магазин',
+      calculator_system: 'Калькулятор',
+      clock_system: 'Часы',
+      weather_system: 'Погода',
+      notes_system: 'Заметки',
+      photos_system: 'Фото',
+      music_system: 'Музыка',
+      safari_system: 'Браузер',
+      messages_system: 'Чаты',
+      maps_system: 'Карты',
+      health_system: 'Здоровье',
     };
-    return names[app] || app;
+    return { name: names[appId] || appId, icon: '📱', isMaterial: false };
   };
 
-  const Icon = getAppIcon(content || '');
+  const info = getAppInfo(content || '');
 
   return (
     <div className="absolute top-3 left-1/2 -translate-x-1/2 z-50">
@@ -73,10 +62,14 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ content }) => {
         {expanded && content && (
           <div className="flex items-center gap-2 px-3 animate-fade-in">
             <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
-              <Icon className="w-3 h-3 text-white" strokeWidth={2.5} />
+              {info.isMaterial ? (
+                <span className="material-icons text-white" style={{ fontSize: '10px' }}>{info.icon}</span>
+              ) : (
+                <span style={{ fontSize: '10px' }}>{info.icon}</span>
+              )}
             </div>
             <span className="text-white text-xs font-medium truncate">
-              {getAppName(content)}
+              {info.name}
             </span>
           </div>
         )}

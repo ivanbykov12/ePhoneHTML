@@ -7,12 +7,11 @@ interface EAppRendererProps {
 
 const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { settings, setSettings } = useAppContext();
+  const { settings, setSettings, customApps } = useAppContext();
   const [showCompatibilityModal, setShowCompatibilityModal] = useState(false);
   const [appReady, setAppReady] = useState(false);
 
   useEffect(() => {
-    // Проверяем совместимость с текущей моделью
     if (app.supportedModels && app.supportedModels.length > 0) {
       if (!app.supportedModels.includes(settings.phoneModel)) {
         setShowCompatibilityModal(true);
@@ -25,7 +24,6 @@ const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
   useEffect(() => {
     if (!containerRef.current || !appReady) return;
 
-    // Создаем iframe для изоляции
     const iframe = document.createElement('iframe');
     iframe.style.cssText = 'width: 100%; height: 100%; border: none; background: transparent;';
     iframe.sandbox.add('allow-scripts');
@@ -34,7 +32,7 @@ const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
     containerRef.current.innerHTML = '';
     containerRef.current.appendChild(iframe);
 
-    // API для приложений
+    // Полный API для приложений
     const ePhoneAPI = `
       <script>
         window.ePhone = {
@@ -57,12 +55,17 @@ const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
           },
           getModel: () => {
             return '${settings.phoneModel}';
+          },
+          setSettings: (newSettings) => {
+            window.parent.postMessage({ type: 'setSettings', settings: newSettings }, '*');
+          },
+          switchModel: (model) => {
+            window.parent.postMessage({ type: 'switchModel', model: model }, '*');
           }
         };
       </script>
     `;
 
-    // Полный HTML документ
     const html = `
       <!DOCTYPE html>
       <html>
@@ -93,10 +96,18 @@ const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
 
     iframe.srcdoc = html;
 
-    // Обработка сообщений от iframe
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === 'closeApp') {
         window.dispatchEvent(new CustomEvent('closeEApp'));
+      } else if (event.data?.type === 'setSettings') {
+        setSettings(prev => ({ ...prev, ...event.data.settings }));
+      } else if (event.data?.type === 'switchModel') {
+        const model = event.data.model as PhoneModel;
+        setSettings(s => ({
+          ...s,
+          phoneModel: model,
+          disableIsland: model !== 'iphone14' ? true : s.disableIsland,
+        }));
       }
     };
 
@@ -104,7 +115,7 @@ const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
     return () => {
       window.removeEventListener('message', handleMessage);
     };
-  }, [app, appReady, settings]);
+  }, [app, appReady, settings, setSettings]);
 
   const handleSwitchModel = (model: PhoneModel) => {
     setSettings(s => ({
