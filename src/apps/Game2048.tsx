@@ -132,7 +132,7 @@ const Game2048: React.FC = () => {
   };
 
   return (
-    <div className="w-full h-full bg-amber-900 flex flex-col items-center pt-2">
+    <div className="w-full h-full bg-amber-900 flex flex-col items-center">
       <div className="text-white text-lg font-bold mb-2">🎮 2048</div>
       <div className="flex gap-6 text-white text-sm mb-3">
         <span>Счёт: {score}</span>

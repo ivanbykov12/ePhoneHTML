@@ -47,7 +47,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
   };
 
   return (
-    <div className={`w-full h-full bg-gradient-to-b ${getWallpaper()} flex flex-col pt-14`}>
+    <div className={`w-full h-full bg-gradient-to-b ${getWallpaper()} flex flex-col`}>
       {/* App Grid */}
       <div className="flex-1 px-5 pt-4 overflow-y-auto">
         <div className="grid grid-cols-4 gap-y-5 gap-x-4">
@@ -75,7 +75,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
       </div>
 
       {/* Dock */}
-      <div className="mx-4 mb-3 px-4 py-3 backdrop-blur-xl bg-white/10 border border-white/20 rounded-[22px]">
+      <div className="mx-4 mb-4 px-4 py-3 backdrop-blur-xl bg-white/10 border border-white/20 rounded-[22px]">
         <div className="flex justify-around">
           {dockApps.map(appId => {
             const app = apps.find(a => a.id === appId);

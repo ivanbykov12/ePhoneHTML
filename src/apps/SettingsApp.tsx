@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAppContext, PhoneModel } from '../context/AppContext';
-import { ChevronRight, Wifi, Bluetooth, Plane, Cog, Sun, Image as ImageIcon, Bell, Volume2, Moon, Battery, Lock, Info, Smartphone, MonitorOff } from 'lucide-react';
+import { ChevronRight, Wifi, Bluetooth, Plane, Cog, Sun, Image as ImageIcon, Bell, Volume2, Moon, Battery, Lock, Info, Smartphone, Palette, User } from 'lucide-react';
 
 const SettingsApp: React.FC = () => {
   const { settings, setSettings } = useAppContext();
@@ -31,8 +31,8 @@ const SettingsApp: React.FC = () => {
 
   if (activeSection === 'wallpaper') {
     return (
-      <div className="w-full h-full bg-black pt-2 overflow-y-auto pb-20">
-        <div className="flex items-center gap-3 mb-6 px-4">
+      <div className="w-full h-full bg-black overflow-y-auto pb-20">
+        <div className="flex items-center gap-3 mb-6 px-4 pt-2">
           <button onClick={() => setActiveSection(null)} className="text-blue-400 text-sm">← Назад</button>
           <h2 className="text-white text-lg font-bold">Обои</h2>
         </div>
@@ -55,92 +55,12 @@ const SettingsApp: React.FC = () => {
     );
   }
 
-  if (activeSection === 'display') {
+  if (activeSection === 'site-settings') {
     return (
-      <div className="w-full h-full bg-black pt-2 overflow-y-auto pb-20">
-        <div className="flex items-center gap-3 mb-6 px-4">
+      <div className="w-full h-full bg-black overflow-y-auto pb-20">
+        <div className="flex items-center gap-3 mb-6 px-4 pt-2">
           <button onClick={() => setActiveSection(null)} className="text-blue-400 text-sm">← Назад</button>
-          <h2 className="text-white text-lg font-bold">Экран и яркость</h2>
-        </div>
-        <div className="space-y-4 px-4">
-          <div className="bg-gray-800 rounded-xl p-4">
-            <div className="text-white text-sm mb-2">Яркость</div>
-            <input
-              type="range" min="30" max="100" value={settings.brightness}
-              onChange={(e) => setSettings(s => ({ ...s, brightness: Number(e.target.value) }))}
-              className="w-full accent-blue-500"
-            />
-            <div className="text-gray-400 text-xs mt-1">{settings.brightness}%</div>
-          </div>
-          <div className="bg-gray-800 rounded-xl p-4">
-            <div className="text-white text-sm mb-3">Размер текста</div>
-            <div className="flex gap-2">
-              {['small', 'medium', 'large'].map(size => (
-                <button key={size} onClick={() => setSettings(s => ({ ...s, fontSize: size }))}
-                  className={`flex-1 py-2 rounded-lg text-sm ${settings.fontSize === size ? 'bg-blue-500 text-white' : 'bg-gray-700 text-gray-300'}`}
-                >
-                  {size === 'small' ? 'A' : size === 'medium' ? 'A' : 'A'}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="bg-gray-800 rounded-xl p-4">
-            <div className="text-white text-sm mb-3">Цвет акцента</div>
-            <div className="flex gap-3 flex-wrap">
-              {accentColors.map(color => (
-                <div key={color.id}
-                  className={`w-8 h-8 rounded-full cursor-pointer border-2 ${settings.accentColor === color.id ? 'border-white scale-110' : 'border-transparent'}`}
-                  style={{ backgroundColor: color.id }}
-                  onClick={() => setSettings(s => ({ ...s, accentColor: color.id }))}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (activeSection === 'general') {
-    return (
-      <div className="w-full h-full bg-black pt-2 overflow-y-auto pb-20">
-        <div className="flex items-center gap-3 mb-6 px-4">
-          <button onClick={() => setActiveSection(null)} className="text-blue-400 text-sm">← Назад</button>
-          <h2 className="text-white text-lg font-bold">Основные</h2>
-        </div>
-        <div className="space-y-3 px-4">
-          <div className="bg-gray-800 rounded-xl p-4">
-            <div className="text-white text-sm mb-2">Имя устройства</div>
-            <input type="text" value={settings.name}
-              onChange={(e) => setSettings(s => ({ ...s, name: e.target.value }))}
-              className="w-full bg-gray-700 text-white rounded-lg px-3 py-2 text-sm"
-            />
-          </div>
-          <div className="bg-gray-800 rounded-xl p-4">
-            <div className="text-white text-sm mb-2">Язык</div>
-            <select value={settings.language}
-              onChange={(e) => setSettings(s => ({ ...s, language: e.target.value }))}
-              className="w-full bg-gray-700 text-white rounded-lg px-3 py-2 text-sm"
-            >
-              <option>Русский</option>
-              <option>English</option>
-              <option>Deutsch</option>
-              <option>Français</option>
-            </select>
-          </div>
-          <ToggleRow label="Тактильный отклик" value={settings.haptic} onChange={() => setSettings(s => ({ ...s, haptic: !s.haptic }))} />
-          <ToggleRow label="Звуки" value={settings.sound} onChange={() => setSettings(s => ({ ...s, sound: !s.sound }))} />
-        </div>
-      </div>
-    );
-  }
-
-  if (activeSection === 'appearance') {
-    return (
-      <div className="w-full h-full bg-black pt-2 overflow-y-auto pb-20">
-        <div className="flex items-center gap-3 mb-6 px-4">
-          <button onClick={() => setActiveSection(null)} className="text-blue-400 text-sm">← Назад</button>
-          <h2 className="text-white text-lg font-bold">Внешний вид</h2>
+          <h2 className="text-white text-lg font-bold">Настройки сайта</h2>
         </div>
         <div className="space-y-4 px-4">
           {/* Phone Model */}
@@ -187,21 +107,153 @@ const SettingsApp: React.FC = () => {
               disabledNote={settings.phoneModel !== 'iphone14' ? 'Только на ePhone 14' : undefined}
             />
           </div>
+
+          {/* Wallpaper */}
+          <div className="bg-gray-800 rounded-xl p-4">
+            <div className="text-white text-sm font-semibold mb-3 flex items-center gap-2">
+              <Palette className="w-4 h-4" /> Обои
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              {wallpapers.map(wp => (
+                <div
+                  key={wp.id}
+                  onClick={() => setSettings(s => ({ ...s, wallpaper: wp.id }))}
+                  className={`min-w-[60px] h-20 rounded-lg bg-gradient-to-b ${wp.preview} cursor-pointer border-2 ${
+                    settings.wallpaper === wp.id ? 'border-blue-500' : 'border-transparent'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Accent Color */}
+          <div className="bg-gray-800 rounded-xl p-4">
+            <div className="text-white text-sm mb-3">Цвет акцента</div>
+            <div className="flex gap-3 flex-wrap">
+              {accentColors.map(color => (
+                <div key={color.id}
+                  className={`w-8 h-8 rounded-full cursor-pointer border-2 ${settings.accentColor === color.id ? 'border-white scale-110' : 'border-transparent'}`}
+                  style={{ backgroundColor: color.id }}
+                  onClick={() => setSettings(s => ({ ...s, accentColor: color.id }))}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (activeSection === 'display') {
+    return (
+      <div className="w-full h-full bg-black overflow-y-auto pb-20">
+        <div className="flex items-center gap-3 mb-6 px-4 pt-2">
+          <button onClick={() => setActiveSection(null)} className="text-blue-400 text-sm">← Назад</button>
+          <h2 className="text-white text-lg font-bold">Экран и яркость</h2>
+        </div>
+        <div className="space-y-4 px-4">
+          <div className="bg-gray-800 rounded-xl p-4">
+            <div className="text-white text-sm mb-2">Яркость</div>
+            <input
+              type="range" min="30" max="100" value={settings.brightness}
+              onChange={(e) => setSettings(s => ({ ...s, brightness: Number(e.target.value) }))}
+              className="w-full accent-blue-500"
+            />
+            <div className="text-gray-400 text-xs mt-1">{settings.brightness}%</div>
+          </div>
+          <div className="bg-gray-800 rounded-xl p-4">
+            <div className="text-white text-sm mb-3">Размер текста</div>
+            <div className="flex gap-2">
+              {['small', 'medium', 'large'].map(size => (
+                <button key={size} onClick={() => setSettings(s => ({ ...s, fontSize: size }))}
+                  className={`flex-1 py-2 rounded-lg text-sm ${settings.fontSize === size ? 'bg-blue-500 text-white' : 'bg-gray-700 text-gray-300'}`}
+                >
+                  {size === 'small' ? 'A' : size === 'medium' ? 'A' : 'A'}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (activeSection === 'general') {
+    return (
+      <div className="w-full h-full bg-black overflow-y-auto pb-20">
+        <div className="flex items-center gap-3 mb-6 px-4 pt-2">
+          <button onClick={() => setActiveSection(null)} className="text-blue-400 text-sm">← Назад</button>
+          <h2 className="text-white text-lg font-bold">Основные</h2>
+        </div>
+        <div className="space-y-3 px-4">
+          <div className="bg-gray-800 rounded-xl p-4">
+            <div className="text-white text-sm mb-2">Имя устройства</div>
+            <input type="text" value={settings.name}
+              onChange={(e) => setSettings(s => ({ ...s, name: e.target.value }))}
+              className="w-full bg-gray-700 text-white rounded-lg px-3 py-2 text-sm"
+            />
+          </div>
+          <div className="bg-gray-800 rounded-xl p-4">
+            <div className="text-white text-sm mb-2">Язык</div>
+            <select value={settings.language}
+              onChange={(e) => setSettings(s => ({ ...s, language: e.target.value }))}
+              className="w-full bg-gray-700 text-white rounded-lg px-3 py-2 text-sm"
+            >
+              <option>Русский</option>
+              <option>English</option>
+              <option>Deutsch</option>
+              <option>Français</option>
+            </select>
+          </div>
+          <ToggleRow label="Тактильный отклик" value={settings.haptic} onChange={() => setSettings(s => ({ ...s, haptic: !s.haptic }))} />
+          <ToggleRow label="Звуки" value={settings.sound} onChange={() => setSettings(s => ({ ...s, sound: !s.sound }))} />
+        </div>
+      </div>
+    );
+  }
+
+  if (activeSection === 'apple-id') {
+    return (
+      <div className="w-full h-full bg-black overflow-y-auto pb-20">
+        <div className="flex items-center gap-3 mb-6 px-4 pt-2">
+          <button onClick={() => setActiveSection(null)} className="text-blue-400 text-sm">← Назад</button>
+          <h2 className="text-white text-lg font-bold">Epple ID</h2>
+        </div>
+        <div className="px-4">
+          <div className="bg-gray-800 rounded-xl p-6 text-center mb-4">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center mx-auto mb-4">
+              <User className="w-10 h-10 text-white" />
+            </div>
+            <div className="text-white text-lg font-semibold">{settings.name}</div>
+            <div className="text-gray-400 text-sm mt-1">user@epple.com</div>
+          </div>
+          
+          <div className="space-y-2">
+            <SettingRow icon={<Info className="w-5 h-5 text-blue-400" />} label="Личная информация" />
+            <SettingRow icon={<Lock className="w-5 h-5 text-gray-400" />} label="Пароль и безопасность" />
+            <SettingRow icon={<Wifi className="w-5 h-5 text-blue-400" />} label="iCloud" />
+            <SettingRow icon={<Smartphone className="w-5 h-5 text-purple-400" />} label="Устройства" />
+          </div>
+
+          <button className="w-full mt-6 py-3 bg-red-500/20 text-red-400 rounded-xl font-medium">
+            Выйти из Epple ID
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full h-full bg-black pt-2 overflow-y-auto pb-20">
-      <h1 className="text-white text-2xl font-bold mb-6 px-4">Настройки</h1>
+    <div className="w-full h-full bg-black overflow-y-auto pb-20">
+      <h1 className="text-white text-2xl font-bold mb-6 px-4 pt-2">Настройки</h1>
 
       {/* Profile */}
-      <div className="bg-gray-800 rounded-xl p-4 mb-4 mx-4 flex items-center gap-3">
+      <div 
+        className="bg-gray-800 rounded-xl p-4 mb-4 mx-4 flex items-center gap-3 cursor-pointer active:bg-gray-700"
+        onClick={() => setActiveSection('apple-id')}
+      >
         <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
-          <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-          </svg>
+          <User className="w-7 h-7 text-white" />
         </div>
         <div>
           <div className="text-white font-semibold">{settings.name}</div>
@@ -216,7 +268,7 @@ const SettingsApp: React.FC = () => {
         <SettingRow icon={<Bluetooth className="w-5 h-5 text-blue-400" />} label="Bluetooth" value="Вкл." />
         <SettingRow icon={<Plane className="w-5 h-5 text-orange-400" />} label="Авиарежим" toggle={false} />
         <SettingRow icon={<Cog className="w-5 h-5 text-gray-400" />} label="Основные" onClick={() => setActiveSection('general')} />
-        <SettingRow icon={<Smartphone className="w-5 h-5 text-purple-400" />} label="Внешний вид" onClick={() => setActiveSection('appearance')} badge="ePhone 14" />
+        <SettingRow icon={<Palette className="w-5 h-5 text-purple-400" />} label="Настройки сайта" onClick={() => setActiveSection('site-settings')} badge={settings.phoneModel === 'iphone14' ? 'ePhone 14' : settings.phoneModel === 'iphonex' ? 'ePhone X' : 'ePhone 8'} />
         <SettingRow icon={<Sun className="w-5 h-5 text-yellow-400" />} label="Экран и яркость" onClick={() => setActiveSection('display')} />
         <SettingRow icon={<ImageIcon className="w-5 h-5 text-cyan-400" />} label="Обои" onClick={() => setActiveSection('wallpaper')} />
         <SettingRow icon={<Bell className="w-5 h-5 text-red-400" />} label="Уведомления" toggle={settings.notifications} onToggle={() => setSettings(s => ({ ...s, notifications: !s.notifications }))} />

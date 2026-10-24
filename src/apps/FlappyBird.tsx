@@ -170,7 +170,7 @@ const FlappyBird: React.FC = () => {
   }, [gameState]);
 
   return (
-    <div className="w-full h-full bg-sky-400 flex flex-col items-center pt-2">
+    <div className="w-full h-full bg-sky-400 flex flex-col items-center">
       <div className="text-white text-lg font-bold mb-2">🐦 Flappy Bird</div>
       <div className="flex gap-6 text-white text-sm mb-3">
         <span>Счёт: {score}</span>

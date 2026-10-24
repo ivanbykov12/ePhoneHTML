@@ -38,35 +38,42 @@ function App() {
   };
 
   // Phone frame dimensions based on model
-  const getFrameStyle = () => {
+  const getFrameConfig = () => {
     switch (settings.phoneModel) {
       case 'iphone8':
         return {
           width: '375px',
           height: '667px',
           borderRadius: '40px',
-          border: '4px solid #333',
-          boxShadow: '0 0 0 2px #1a1a1a, 0 25px 80px rgba(0,0,0,0.8), inset 0 0 0 2px #444',
+          topBezel: '90px', // Большая верхняя рамка
+          bottomBezel: '90px', // Большая нижняя рамка
+          statusBarHeight: '20px',
+          contentPaddingTop: '20px',
         };
       case 'iphonex':
         return {
           width: '375px',
           height: '812px',
           borderRadius: '44px',
-          border: '4px solid #333',
-          boxShadow: '0 0 0 2px #1a1a1a, 0 25px 80px rgba(0,0,0,0.8), inset 0 0 0 2px #444',
+          topBezel: '44px',
+          bottomBezel: '34px',
+          statusBarHeight: '44px',
+          contentPaddingTop: '44px',
         };
       case 'iphone14':
         return {
           width: '390px',
           height: '844px',
           borderRadius: '50px',
-          border: '4px solid #333',
-          boxShadow: '0 0 0 2px #1a1a1a, 0 25px 80px rgba(0,0,0,0.8), inset 0 0 0 2px #444',
+          topBezel: '50px',
+          bottomBezel: '40px',
+          statusBarHeight: '54px',
+          contentPaddingTop: '54px',
         };
     }
   };
 
+  const frameConfig = getFrameConfig();
   const showIsland = settings.phoneModel === 'iphone14' && !settings.disableIsland;
   const hasNotch = settings.phoneModel === 'iphonex';
   const hasHomeButton = settings.phoneModel === 'iphone8';
@@ -78,8 +85,8 @@ function App() {
     const updateScale = () => {
       const vh = window.innerHeight;
       const vw = window.innerWidth;
-      const frameH = settings.phoneModel === 'iphone8' ? 667 : settings.phoneModel === 'iphonex' ? 812 : 844;
-      const frameW = settings.phoneModel === 'iphone8' ? 375 : settings.phoneModel === 'iphonex' ? 375 : 390;
+      const frameH = parseInt(frameConfig.height);
+      const frameW = parseInt(frameConfig.width);
       const scaleH = (vh - 40) / frameH;
       const scaleW = (vw - 20) / frameW;
       setScale(Math.min(1, scaleH, scaleW));
@@ -96,7 +103,11 @@ function App() {
         <div
           className="relative bg-black overflow-hidden"
           style={{
-            ...getFrameStyle(),
+            width: frameConfig.width,
+            height: frameConfig.height,
+            borderRadius: frameConfig.borderRadius,
+            border: '4px solid #333',
+            boxShadow: '0 0 0 2px #1a1a1a, 0 25px 80px rgba(0,0,0,0.8), inset 0 0 0 2px #444',
             transform: `scale(${scale})`,
             transformOrigin: 'center center',
           }}
@@ -112,8 +123,14 @@ function App() {
           {/* Status Bar */}
           <StatusBar time={time} model={settings.phoneModel} />
 
-          {/* Main Content */}
-          <div className="w-full h-full relative overflow-hidden">
+          {/* Main Content Area */}
+          <div
+            className="w-full h-full relative overflow-hidden"
+            style={{
+              paddingTop: hasHomeButton ? frameConfig.topBezel : frameConfig.contentPaddingTop,
+              paddingBottom: hasHomeButton ? frameConfig.bottomBezel : '0px',
+            }}
+          >
             {isLocked ? (
               <LockScreen time={time} onUnlock={unlockPhone} />
             ) : currentApp ? (
@@ -127,10 +144,11 @@ function App() {
             )}
           </div>
 
-          {/* Home Indicator / Home Button */}
-          {hasHomeButton ? (
+          {/* Home Button (iPhone 8) - в нижней рамке */}
+          {hasHomeButton && (
             <div
-              className="absolute bottom-2 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full border-2 border-gray-600 bg-black/50 cursor-pointer active:bg-gray-800 flex items-center justify-center"
+              className="absolute left-1/2 -translate-x-1/2 w-14 h-14 rounded-full border-2 border-gray-600 bg-black/80 cursor-pointer active:bg-gray-800 flex items-center justify-center"
+              style={{ bottom: '18px' }}
               onClick={() => {
                 if (currentApp) closeApp();
                 else if (!isLocked) lockPhone();
@@ -138,7 +156,10 @@ function App() {
             >
               <div className="w-5 h-5 border border-gray-500 rounded-sm" />
             </div>
-          ) : (
+          )}
+
+          {/* Home Indicator (iPhone X, 14) */}
+          {!hasHomeButton && (
             <div
               className="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-white/50 rounded-full cursor-pointer"
               onClick={() => {

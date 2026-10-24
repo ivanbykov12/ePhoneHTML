@@ -183,7 +183,7 @@ const TetrisGame: React.FC = () => {
   };
 
   return (
-    <div className="w-full h-full bg-gray-900 flex flex-col items-center pt-2">
+    <div className="w-full h-full bg-gray-900 flex flex-col items-center">
       <div className="text-white text-lg font-bold mb-2">🧱 Тетрис</div>
       <div className="flex gap-8 text-white text-sm mb-3">
         <span>Счёт: {score}</span>

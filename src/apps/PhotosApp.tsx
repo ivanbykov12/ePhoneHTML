@@ -31,7 +31,7 @@ const PhotosApp: React.FC = () => {
     const photo = photos.find(p => p.id === selected);
     if (!photo) return null;
     return (
-      <div className="w-full h-full bg-black pt-2 flex flex-col items-center">
+      <div className="w-full h-full bg-black flex flex-col items-center">
         <div className="flex justify-between w-full px-4 mb-4">
           <button onClick={() => setSelected(null)} className="text-blue-400 text-sm">← Назад</button>
           <button onClick={() => toggleFav(photo.id)} className="text-xl">
@@ -48,7 +48,7 @@ const PhotosApp: React.FC = () => {
   }
 
   return (
-    <div className="w-full h-full bg-black pt-2 overflow-y-auto pb-20">
+    <div className="w-full h-full bg-black overflow-y-auto pb-20">
       <div className="px-4 mb-4">
         <h1 className="text-white text-2xl font-bold">Фото</h1>
         <p className="text-gray-400 text-sm">{photos.length} фото</p>

@@ -74,7 +74,7 @@ const MessagesApp: React.FC = () => {
 
   if (selectedChat) {
     return (
-      <div className="w-full h-full bg-black pt-2 flex flex-col">
+      <div className="w-full h-full bg-black flex flex-col">
         {/* Header */}
         <div className="flex items-center gap-3 px-4 pb-3 border-b border-gray-800">
           <button onClick={() => setSelectedChat(null)} className="text-blue-400 text-sm">←</button>
@@ -123,7 +123,7 @@ const MessagesApp: React.FC = () => {
   }
 
   return (
-    <div className="w-full h-full bg-black pt-2 overflow-y-auto pb-20">
+    <div className="w-full h-full bg-black overflow-y-auto pb-20">
       <div className="px-4 mb-4">
         <h1 className="text-white text-2xl font-bold">Сообщения</h1>
         <div className="bg-gray-800 rounded-xl px-4 py-2 flex items-center gap-2 mt-3">

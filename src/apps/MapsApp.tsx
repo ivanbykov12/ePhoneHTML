@@ -14,7 +14,7 @@ const MapsApp: React.FC = () => {
   ];
 
   return (
-    <div className="w-full h-full bg-gray-900 pt-2 flex flex-col">
+    <div className="w-full h-full bg-gray-900 flex flex-col">
       {/* Search */}
       <div className="px-4 mb-3">
         <div className="bg-gray-800 rounded-xl px-4 py-2 flex items-center gap-2">

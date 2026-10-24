@@ -1,5 +1,4 @@
 import React from 'react';
-import { useAppContext } from '../context/AppContext';
 import SnakeGame from '../apps/SnakeGame';
 import TetrisGame from '../apps/TetrisGame';
 import Game2048 from '../apps/Game2048';
@@ -23,11 +22,7 @@ interface AppRendererProps {
   onLock: () => void;
 }
 
-const AppRenderer: React.FC<AppRendererProps> = ({ appName, onClose }) => {
-  const { settings } = useAppContext();
-
-  const paddingTop = settings.phoneModel === 'iphone8' ? '36px' : settings.phoneModel === 'iphonex' ? '52px' : '54px';
-
+const AppRenderer: React.FC<AppRendererProps> = ({ appName }) => {
   const renderApp = () => {
     switch (appName) {
       case 'snake': return <SnakeGame />;
@@ -52,18 +47,7 @@ const AppRenderer: React.FC<AppRendererProps> = ({ appName, onClose }) => {
 
   return (
     <div className="w-full h-full animate-slide-up relative">
-      <div style={{ paddingTop }}>
-        {/* App Header Bar - below status bar */}
-        <div className="flex justify-center mb-1">
-          <button
-            onClick={onClose}
-            className="px-4 py-1.5 bg-black/40 backdrop-blur-md rounded-full text-white text-xs font-medium active:scale-90 transition-transform border border-white/10"
-          >
-            ← Домой
-          </button>
-        </div>
-        {renderApp()}
-      </div>
+      {renderApp()}
     </div>
   );
 };
