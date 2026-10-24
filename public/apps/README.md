@@ -1,117 +1,165 @@
 # 📱 ePhone Simulator - Система плагинов .eapp
 
-## Что такое .eapp?
+## ✅ Что добавлено в v3.0:
 
-`.eapp` - это формат файлов для создания пользовательских приложений и игр для симулятора ePhone. 
-Файл представляет собой JSON с метаданными и кодом приложения.
+### 🎨 Новые возможности:
 
-## 📁 Куда класть файлы?
+1. **Светлая/Тёмная тема** - переключается в настройках и Control Center
+2. **Control Center** - свайп вниз от статусбара для быстрого доступа
+3. **Material Icons** - поддержка иконок Google Material в приложениях
+4. **Проверка совместимости** - приложения спрашивают разрешение на переключение модели
+5. **Редактируемый Lock Screen** - виджеты настраиваются в настройках
+6. **Все настройки работают** - все вкладки полностью функциональны
 
-Все `.eapp` файлы должны находиться в папке `public/apps/`
-
-После добавления файла перезагрузи страницу - приложение появится в папке **Custom Apps** на рабочем столе.
-
-## 📝 Структура .eapp файла
+### 📁 Структура .eapp файла:
 
 ```json
 {
-  "id": "my_game",
-  "name": "Моя Игра",
-  "icon": "🎮",
+  "id": "my_app",
+  "name": "Моё Приложение",
+  "icon": "material:gamepad",  // или эмодзи "🎮"
   "color": "from-purple-500 to-pink-500",
   "version": "1.0.0",
   "author": "Ваше Имя",
-  "description": "Описание приложения",
-  "code": "<div>...</div><style>...</style><script>...</script>"
+  "description": "Описание",
+  "supportedModels": ["iphone8", "iphonex", "iphone14"],
+  "isSystem": false,
+  "changelog": "Версия 1.0 - первый релиз",
+  "code": "<div>HTML</div><style>CSS</style><script>JS</script>"
 }
 ```
 
-### Обязательные поля:
-
-| Поле | Тип | Описание |
-|------|-----|----------|
-| `id` | string | Уникальный ID приложения (латиница, цифры, _) |
-| `name` | string | Название приложения |
-| `icon` | string | Эмодзи иконка |
-| `code` | string | HTML/CSS/JS код приложения |
-
-### Опциональные поля:
-
-| Поле | Тип | Описание |
-|------|-----|----------|
-| `color` | string | Градиент для иконки (Tailwind класс) |
-| `version` | string | Версия приложения |
-| `author` | string | Автор |
-| `description` | string | Описание |
-
-## 🎨 Доступные градиенты для иконки:
-
-- `from-red-500 to-pink-500`
-- `from-blue-500 to-purple-500`
-- `from-green-500 to-teal-500`
-- `from-yellow-500 to-orange-500`
-- `from-purple-500 to-pink-500`
-- `from-cyan-500 to-blue-500`
-- `from-indigo-500 to-purple-500`
-- `from-rose-500 to-red-500`
-
-## 🎮 API симулятора
-
-Внутри кода приложения доступны специальные функции:
+### 🎮 Новое API:
 
 ```javascript
-// Получить размер экрана
-ePhone.getScreenSize() // { width: 390, height: 844 }
+// Получить настройки (тема, модель, и т.д.)
+const settings = ePhone.getSettings();
+const isDark = settings.darkMode;
+const model = settings.phoneModel;
 
-// Вибрация (если поддерживается)
-ePhone.vibrate(pattern) // pattern: число мс или массив
+// Получить текущую модель
+const model = ePhone.getModel(); // 'iphone8' | 'iphonex' | 'iphone14'
 
-// Сохранить данные
-ePhone.save(key, value)
+// Сохранить/загрузить данные
+ePhone.save('key', value);
+const data = ePhone.load('key');
 
-// Загрузить данные
-ePhone.load(key) // возвращает value или null
+// Вибрация
+ePhone.vibrate(200);
 
 // Закрыть приложение
-ePhone.closeApp()
-
-// Получить настройки
-ePhone.getSettings() // возвращает объект настроек
+ePhone.closeApp();
 ```
 
-## 📋 Пример минимального приложения
+### 🎨 Material Icons:
 
+В коде приложения можно использовать:
+```html
+<span class="material-icons">gamepad</span>
+<span class="material-symbols-outlined">settings</span>
+```
+
+Или в иконке приложения:
 ```json
 {
-  "id": "hello_world",
-  "name": "Привет Мир",
-  "icon": "👋",
-  "color": "from-blue-400 to-blue-600",
-  "code": "<div style=\"padding: 20px; color: white; text-align: center;\"><h1>Привет, мир!</h1><p>Это моё первое приложение</p></div>"
+  "icon": "material:gamepad"
 }
 ```
 
-## 🛠 Советы по разработке
+### 📱 Поддержка моделей:
 
-1. **Редактирование**: Используй Notepad++ или VS Code
-2. **Тестирование**: Сохрани файл → перезагрузи страницу → открой приложение
-3. **Отладка**: Открой DevTools (F12) для просмотра ошибок
-4. **Стилизация**: Используй Tailwind CSS классы или обычный CSS
-5. **Размер экрана**: Учитывай что приложение работает в области ~390x700px
+Если приложение оптимизировано только для определённых моделей:
+```json
+{
+  "supportedModels": ["iphone8", "iphonex"]
+}
+```
 
-## ⚠️ Ограничения
+Пользователю будет предложено переключиться на совместимую модель.
 
-- Код выполняется в iframe-подобной среде
-- Нет доступа к файловой системе
-- Нет доступа к внешним API (CORS)
-- Максимальный размер файла: ~1MB
+### 🌗 Поддержка тем:
 
-## 🚀 Примеры приложений
+Обязательно поддерживайте обе темы:
+```javascript
+const settings = ePhone.getSettings();
+const isDark = settings.darkMode;
 
-В папке `public/apps/` уже есть примеры:
+// Применяйте стили в зависимости от темы
+document.body.style.background = isDark ? '#000' : '#fff';
+document.body.style.color = isDark ? '#fff' : '#000';
+```
 
-- `template.eapp` - шаблон с базовой структурой
-- `catch_star.eapp` - игра "Поймай Звезду"
-- `reaction_test.eapp` - тест скорости реакции
+### 🎛 Control Center:
+
+- Свайп вниз от статусбара для открытия
+- Быстрый доступ к Wi-Fi, Bluetooth, авиарежиму
+- Переключение тёмной/светлой темы
+- Яркость и громкость
+- Фонарик, таймер, калькулятор, камера
+
+### ⚙️ Настройки:
+
+Все вкладки полностью функциональны:
+- **Epple ID** - профиль пользователя
+- **Настройки сайта** - модель телефона, Dynamic Island, Control Center
+- **Экран и яркость** - тёмная тема, яркость, размер текста, цвет акцента
+- **Обои** - 6 вариантов включая светлый
+- **Основные** - имя устройства, язык, тактильный отклик, звуки
+
+### 📂 Файлы:
+
+```
+public/apps/
+├── manifest.json          # Список загружаемых файлов
+├── template.eapp          # Шаблон с Material Icons и поддержкой тем
+├── catch_star.eapp        # Игра "Поймай Звезду"
+├── reaction_test.eapp     # Тест реакции
+├── README.md              # Документация
+└── PROMPT_FOR_AI.md       # Промпт для ИИ (обновлён!)
+```
+
+### 🚀 Как добавить приложение:
+
+1. Создай файл `my_game.eapp` в `public/apps/`
+2. Напиши JSON с кодом (смотри template.eapp)
+3. Добавь `"my_game.eapp"` в `manifest.json`
+4. Перезагрузи страницу
+5. Приложение появится в Custom Apps!
+
+### 💡 Советы:
+
+- Используй Material Icons для красивых иконок
+- Поддерживай обе темы (тёмную и светлую)
+- Указывай supportedModels если нужно
+- Сохраняй прогресс через ePhone.save()
+- Редактируй в Notepad++ или VS Code
+
+### ⚠️ Системные приложения:
+
+Системные приложения (Змейка, Тетрис, Настройки и т.д.) нельзя конвертировать в .eapp
+потому что они потеряют функционал. Но их дизайн можно менять через настройки.
+
+### 🎯 Примеры использования:
+
+**Простое приложение с Material Icons:**
+```json
+{
+  "id": "counter",
+  "name": "Счётчик",
+  "icon": "material:plus_one",
+  "color": "from-green-500 to-teal-500",
+  "code": "<div style='padding:20px;text-align:center;'><span class='material-icons' style='font-size:64px;' id='count'>0</span><br><button onclick='inc()' style='padding:20px;font-size:24px;'><span class='material-icons'>add</span></button></div><script>let c=0;function inc(){c++;document.getElementById('count').textContent=c;}</script>"
+}
+```
+
+**Приложение с поддержкой темы:**
+```json
+{
+  "id": "themed_app",
+  "name": "Тематическое",
+  "icon": "🎨",
+  "code": "<div id='app' style='padding:20px;'><h1>Привет!</h1></div><script>const s=ePhone.getSettings();const app=document.getElementById('app');app.style.background=s.darkMode?'#1a1a1a':'#f0f0f0';app.style.color=s.darkMode?'#fff':'#000';</script>"
+}
+```
 
 Удачи в разработке! 🎉

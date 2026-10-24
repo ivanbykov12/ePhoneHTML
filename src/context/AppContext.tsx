@@ -19,6 +19,15 @@ export interface EApp {
   author?: string;
   description?: string;
   code: string;
+  supportedModels?: PhoneModel[];
+  isSystem?: boolean;
+  changelog?: string;
+}
+
+export interface LockScreenWidget {
+  id: string;
+  type: 'weather' | 'battery' | 'calendar' | 'fitness' | 'clock' | 'music';
+  position: 'top' | 'bottom-left' | 'bottom-right';
 }
 
 export interface SystemSettings {
@@ -34,6 +43,9 @@ export interface SystemSettings {
   name: string;
   phoneModel: PhoneModel;
   disableIsland: boolean;
+  lockScreenWidgets: LockScreenWidget[];
+  lockScreenFont: string;
+  controlCenterEnabled: boolean;
 }
 
 export const defaultSettings: SystemSettings = {
@@ -49,6 +61,12 @@ export const defaultSettings: SystemSettings = {
   name: 'ePhone',
   phoneModel: 'iphone14',
   disableIsland: false,
+  lockScreenWidgets: [
+    { id: '1', type: 'weather', position: 'bottom-left' },
+    { id: '2', type: 'battery', position: 'bottom-right' },
+  ],
+  lockScreenFont: 'default',
+  controlCenterEnabled: true,
 };
 
 interface AppContextType {
@@ -56,6 +74,8 @@ interface AppContextType {
   setSettings: React.Dispatch<React.SetStateAction<SystemSettings>>;
   customApps: EApp[];
   setCustomApps: React.Dispatch<React.SetStateAction<EApp[]>>;
+  showControlCenter: boolean;
+  setShowControlCenter: (v: boolean) => void;
 }
 
 export const AppContext = createContext<AppContextType>({
@@ -63,6 +83,8 @@ export const AppContext = createContext<AppContextType>({
   setSettings: () => {},
   customApps: [],
   setCustomApps: () => {},
+  showControlCenter: false,
+  setShowControlCenter: () => {},
 });
 
 export const useAppContext = () => useContext(AppContext);

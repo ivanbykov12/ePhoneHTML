@@ -4,6 +4,7 @@ import HomeScreen from './components/HomeScreen';
 import StatusBar from './components/StatusBar';
 import DynamicIsland from './components/DynamicIsland';
 import AppRenderer from './components/AppRenderer';
+import ControlCenter from './components/ControlCenter';
 import { AppContext, SystemSettings, defaultSettings, PhoneModel, EApp } from './context/AppContext';
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
   const [islandContent, setIslandContent] = useState<string | null>(null);
   const [time, setTime] = useState(new Date());
   const [customApps, setCustomApps] = useState<EApp[]>([]);
+  const [showControlCenter, setShowControlCenter] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
@@ -160,7 +162,7 @@ function App() {
   };
 
   return (
-    <AppContext.Provider value={{ settings, setSettings, customApps, setCustomApps }}>
+    <AppContext.Provider value={{ settings, setSettings, customApps, setCustomApps, showControlCenter, setShowControlCenter }}>
       <div className="w-full h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-purple-900 to-black overflow-hidden">
         {/* ePhone Frame */}
         <div
@@ -184,7 +186,10 @@ function App() {
           )}
 
           {/* Status Bar */}
-          <StatusBar time={time} model={settings.phoneModel} />
+          <StatusBar time={time} model={settings.phoneModel} onSwipeDown={() => setShowControlCenter(true)} />
+
+          {/* Control Center */}
+          <ControlCenter />
 
           {/* Main Content Area */}
           <div

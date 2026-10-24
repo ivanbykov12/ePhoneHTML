@@ -59,6 +59,7 @@ const LockScreen: React.FC<LockScreenProps> = ({ time, onUnlock }) => {
       gradient3: 'from-emerald-900 via-teal-800 to-cyan-900',
       gradient4: 'from-violet-900 via-fuchsia-800 to-pink-900',
       dark: 'from-gray-900 to-black',
+      light: 'from-blue-200 via-purple-200 to-pink-200',
     };
     return wallpapers[settings.wallpaper] || wallpapers.gradient1;
   };

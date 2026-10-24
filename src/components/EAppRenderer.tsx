@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { EApp } from '../context/AppContext';
+import React, { useEffect, useRef, useState } from 'react';
+import { EApp, useAppContext, PhoneModel } from '../context/AppContext';
 
 interface EAppRendererProps {
   app: EApp;
@@ -7,9 +7,23 @@ interface EAppRendererProps {
 
 const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const { settings, setSettings } = useAppContext();
+  const [showCompatibilityModal, setShowCompatibilityModal] = useState(false);
+  const [appReady, setAppReady] = useState(false);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    // Проверяем совместимость с текущей моделью
+    if (app.supportedModels && app.supportedModels.length > 0) {
+      if (!app.supportedModels.includes(settings.phoneModel)) {
+        setShowCompatibilityModal(true);
+        return;
+      }
+    }
+    setAppReady(true);
+  }, [app, settings.phoneModel]);
+
+  useEffect(() => {
+    if (!containerRef.current || !appReady) return;
 
     // Создаем iframe для изоляции
     const iframe = document.createElement('iframe');
@@ -39,7 +53,10 @@ const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
             window.parent.postMessage({ type: 'closeApp' }, '*');
           },
           getSettings: () => {
-            return {};
+            return ${JSON.stringify(settings)};
+          },
+          getModel: () => {
+            return '${settings.phoneModel}';
           }
         };
       </script>
@@ -52,12 +69,18 @@ const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
           body { 
             font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
             overflow-x: hidden;
-            background: #000;
+            background: ${settings.darkMode ? '#000' : '#fff'};
+            color: ${settings.darkMode ? '#fff' : '#000'};
+          }
+          .material-icons, .material-symbols-outlined {
+            font-size: inherit;
           }
         </style>
         ${ePhoneAPI}
@@ -73,7 +96,6 @@ const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
     // Обработка сообщений от iframe
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === 'closeApp') {
-        // Отправляем событие закрытия наверх
         window.dispatchEvent(new CustomEvent('closeEApp'));
       }
     };
@@ -82,7 +104,62 @@ const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
     return () => {
       window.removeEventListener('message', handleMessage);
     };
-  }, [app]);
+  }, [app, appReady, settings]);
+
+  const handleSwitchModel = (model: PhoneModel) => {
+    setSettings(s => ({
+      ...s,
+      phoneModel: model,
+      disableIsland: model !== 'iphone14' ? true : s.disableIsland,
+    }));
+    setShowCompatibilityModal(false);
+    setAppReady(true);
+  };
+
+  if (showCompatibilityModal) {
+    return (
+      <div className="w-full h-full bg-black/90 flex items-center justify-center p-6">
+        <div className="bg-gray-800 rounded-2xl p-6 w-full max-w-xs">
+          <div className="text-center mb-4">
+            <div className="text-4xl mb-2">{app.icon}</div>
+            <h3 className="text-white text-lg font-bold">{app.name}</h3>
+            <p className="text-gray-400 text-sm mt-2">
+              Это приложение оптимизировано для:
+            </p>
+            <div className="flex flex-wrap gap-2 justify-center mt-2">
+              {app.supportedModels?.map(model => (
+                <span key={model} className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs">
+                  {model === 'iphone8' ? 'ePhone 8' : model === 'iphonex' ? 'ePhone X' : 'ePhone 14'}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            {app.supportedModels?.map(model => (
+              <button
+                key={model}
+                onClick={() => handleSwitchModel(model)}
+                className={`w-full py-3 rounded-xl font-medium text-sm ${
+                  settings.phoneModel === model
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-700 text-gray-300'
+                }`}
+              >
+                Переключить на {model === 'iphone8' ? 'ePhone 8' : model === 'iphonex' ? 'ePhone X' : 'ePhone 14'}
+              </button>
+            ))}
+            <button
+              onClick={() => { setShowCompatibilityModal(false); setAppReady(true); }}
+              className="w-full py-2 text-gray-400 text-sm mt-2"
+            >
+              Запустить всё равно
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

@@ -1,20 +1,64 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { PhoneModel } from '../context/AppContext';
 
 interface StatusBarProps {
   time: Date;
   model: PhoneModel;
+  onSwipeDown?: () => void;
 }
 
-const StatusBar: React.FC<StatusBarProps> = ({ time, model }) => {
+const StatusBar: React.FC<StatusBarProps> = ({ time, model, onSwipeDown }) => {
+  const [startY, setStartY] = useState<number | null>(null);
+  const statusBarRef = useRef<HTMLDivElement>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setStartY(e.touches[0].clientY);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (startY === null) return;
+    const diff = e.touches[0].clientY - startY;
+    if (diff > 50 && onSwipeDown) {
+      onSwipeDown();
+      setStartY(null);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setStartY(null);
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setStartY(e.clientY);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (startY === null) return;
+    const diff = e.clientY - startY;
+    if (diff > 50 && onSwipeDown) {
+      onSwipeDown();
+      setStartY(null);
+    }
+  };
+
+  const handleMouseUp = () => {
+    setStartY(null);
+  };
   const timeStr = time.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
 
   // iPhone 8: оператор слева, часы по центру, батарея справа
   if (model === 'iphone8') {
     return (
       <div
+        ref={statusBarRef}
         className="absolute top-0 left-0 right-0 z-40 flex justify-between items-center px-4"
         style={{ height: '90px', paddingTop: '20px' }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
       >
         {/* Левая часть: оператор и сигнал */}
         <div className="flex items-center gap-1">
@@ -52,8 +96,15 @@ const StatusBar: React.FC<StatusBarProps> = ({ time, model }) => {
 
   return (
     <div
+      ref={statusBarRef}
       className="absolute top-0 left-0 right-0 z-40 flex justify-between items-center px-8"
       style={{ paddingTop, height: model === 'iphonex' ? '44px' : '54px' }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
     >
       <span className="text-white text-sm font-semibold">{timeStr}</span>
       <div className="flex items-center gap-1.5">

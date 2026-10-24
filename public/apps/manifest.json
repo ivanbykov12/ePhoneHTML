@@ -3,5 +3,13 @@
     "template.eapp",
     "catch_star.eapp",
     "reaction_test.eapp"
+  ],
+  "version": "3.0",
+  "features": [
+    "dark_mode_support",
+    "material_icons",
+    "model_compatibility_check",
+    "control_center",
+    "lock_screen_widgets"
   ]
 }
