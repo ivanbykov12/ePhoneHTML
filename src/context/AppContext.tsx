@@ -10,6 +10,17 @@ export const getStatusBarPadding = (model: PhoneModel): string => {
   }
 };
 
+export interface EApp {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  version?: string;
+  author?: string;
+  description?: string;
+  code: string;
+}
+
 export interface SystemSettings {
   wallpaper: string;
   darkMode: boolean;
@@ -43,11 +54,15 @@ export const defaultSettings: SystemSettings = {
 interface AppContextType {
   settings: SystemSettings;
   setSettings: React.Dispatch<React.SetStateAction<SystemSettings>>;
+  customApps: EApp[];
+  setCustomApps: React.Dispatch<React.SetStateAction<EApp[]>>;
 }
 
 export const AppContext = createContext<AppContextType>({
   settings: defaultSettings,
   setSettings: () => {},
+  customApps: [],
+  setCustomApps: () => {},
 });
 
 export const useAppContext = () => useContext(AppContext);

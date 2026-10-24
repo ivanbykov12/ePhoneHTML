@@ -4,7 +4,7 @@ import HomeScreen from './components/HomeScreen';
 import StatusBar from './components/StatusBar';
 import DynamicIsland from './components/DynamicIsland';
 import AppRenderer from './components/AppRenderer';
-import { AppContext, SystemSettings, defaultSettings, PhoneModel } from './context/AppContext';
+import { AppContext, SystemSettings, defaultSettings, PhoneModel, EApp } from './context/AppContext';
 
 function App() {
   const [isLocked, setIsLocked] = useState(true);
@@ -12,6 +12,7 @@ function App() {
   const [settings, setSettings] = useState<SystemSettings>(defaultSettings);
   const [islandContent, setIslandContent] = useState<string | null>(null);
   const [time, setTime] = useState(new Date());
+  const [customApps, setCustomApps] = useState<EApp[]>([]);
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
@@ -96,8 +97,70 @@ function App() {
     return () => window.removeEventListener('resize', updateScale);
   }, [settings.phoneModel]);
 
+  // Загрузка .eapp файлов
+  useEffect(() => {
+    loadEApps();
+    // Загружаем сохранённые приложения из localStorage
+    const saved = localStorage.getItem('customApps');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          setCustomApps(prev => [...prev, ...parsed.filter((a: EApp) => !prev.find(p => p.id === a.id))]);
+        }
+      } catch {}
+    }
+  }, []);
+
+  // Сохраняем custom apps в localStorage
+  useEffect(() => {
+    if (customApps.length > 0) {
+      localStorage.setItem('customApps', JSON.stringify(customApps));
+    }
+  }, [customApps]);
+
+  const loadEApps = async () => {
+    try {
+      // Загружаем манифест
+      const manifestResponse = await fetch('/apps/manifest.json');
+      if (!manifestResponse.ok) {
+        console.warn('Manifest not found, using defaults');
+        // Fallback - загружаем стандартные файлы
+        const defaults = ['template.eapp', 'catch_star.eapp', 'reaction_test.eapp'];
+        const loaded: EApp[] = [];
+        for (const file of defaults) {
+          try {
+            const res = await fetch(`/apps/${file}`);
+            if (res.ok) loaded.push(await res.json());
+          } catch {}
+        }
+        setCustomApps(loaded);
+        return;
+      }
+      
+      const manifest = await manifestResponse.json();
+      const loadedApps: EApp[] = [];
+      
+      for (const file of manifest.apps) {
+        try {
+          const response = await fetch(`/apps/${file}`);
+          if (response.ok) {
+            const appData = await response.json();
+            loadedApps.push(appData);
+          }
+        } catch (err) {
+          console.warn(`Failed to load ${file}:`, err);
+        }
+      }
+      
+      setCustomApps(loadedApps);
+    } catch (err) {
+      console.error('Failed to load eapps:', err);
+    }
+  };
+
   return (
-    <AppContext.Provider value={{ settings, setSettings }}>
+    <AppContext.Provider value={{ settings, setSettings, customApps, setCustomApps }}>
       <div className="w-full h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-purple-900 to-black overflow-hidden">
         {/* ePhone Frame */}
         <div

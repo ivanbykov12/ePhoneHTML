@@ -16,6 +16,7 @@ import SafariApp from '../apps/SafariApp';
 import MessagesApp from '../apps/MessagesApp';
 import MapsApp from '../apps/MapsApp';
 import HealthApp from '../apps/HealthApp';
+import EAppRenderer from './EAppRenderer';
 
 interface AppRendererProps {
   appName: string;
@@ -23,11 +24,18 @@ interface AppRendererProps {
   onLock: () => void;
 }
 
-const AppRenderer: React.FC<AppRendererProps> = ({ appName }) => {
-  const { settings } = useAppContext();
+const AppRenderer: React.FC<AppRendererProps> = ({ appName, onClose }) => {
+  const { settings, customApps } = useAppContext();
   const paddingTop = getStatusBarPadding(settings.phoneModel);
 
+  // Проверяем является ли приложение кастомным
+  const customApp = customApps.find(a => a.id === appName);
+
   const renderApp = () => {
+    if (customApp) {
+      return <EAppRenderer app={customApp} />;
+    }
+
     switch (appName) {
       case 'snake': return <SnakeGame />;
       case 'tetris': return <TetrisGame />;
