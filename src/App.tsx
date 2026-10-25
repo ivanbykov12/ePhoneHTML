@@ -182,21 +182,26 @@ function App() {
           <ControlCenter />
 
           {/* Content */}
-          <div className="w-full h-full relative overflow-hidden"
-            style={{
-              paddingTop: hasHomeButton ? frameConfig.topBezel : '0px',
-              paddingBottom: hasHomeButton ? frameConfig.bottomBezel : '0px',
-            }}>
-            {!settings.welcomeCompleted ? (
+          {!settings.welcomeCompleted ? (
+            /* Welcome Setup - Full Screen */
+            <div className="w-full h-full relative overflow-hidden">
               <AppRenderer appName="welcome_setup" onClose={() => {}} onLock={() => {}} />
-            ) : isLocked ? (
-              <LockScreen time={time} onUnlock={unlockPhone} />
-            ) : currentApp ? (
-              <AppRenderer appName={currentApp} onClose={closeApp} onLock={lockPhone} />
-            ) : (
-              <HomeScreen onOpenApp={openApp} />
-            )}
-          </div>
+            </div>
+          ) : (
+            <div className="w-full h-full relative overflow-hidden"
+              style={{
+                paddingTop: hasHomeButton ? frameConfig.topBezel : '0px',
+                paddingBottom: hasHomeButton ? frameConfig.bottomBezel : '0px',
+              }}>
+              {isLocked ? (
+                <LockScreen time={time} onUnlock={unlockPhone} />
+              ) : currentApp ? (
+                <AppRenderer appName={currentApp} onClose={closeApp} onLock={lockPhone} />
+              ) : (
+                <HomeScreen onOpenApp={openApp} />
+              )}
+            </div>
+          )}
 
           {/* Home Button (iPhone 8) */}
           {hasHomeButton && (
