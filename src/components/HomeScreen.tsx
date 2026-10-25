@@ -24,6 +24,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
   const userEApps = customApps.filter(app => !app.isSystem);
   const desktopEApps = userEApps.filter(app => desktopApps.includes(app.id));
   const folderEApps = userEApps.filter(app => !desktopApps.includes(app.id));
+  const isPad = settings.phoneModel === 'epad';
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -234,9 +235,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
         <div className="w-1.5 h-1.5 rounded-full bg-white/40" />
       </div>
 
-      <div className="mx-4 mb-24 px-4 py-3 glass rounded-[22px]">
-        <div className="flex justify-around">
-          {['safari_system', 'messages_system', 'music_system', 'appstore_system'].map(appId => {
+      <div className={`mx-4 ${isPad ? 'mb-6' : 'mb-24'} px-4 py-3 glass rounded-[22px]`}>
+        <div className={`flex ${isPad ? 'justify-between' : 'justify-around'}`}>
+          {(isPad ? 
+            ['safari_system', 'messages_system', 'music_system', 'appstore_system', 'photos_system', 'notes_system', 'calculator_system', 'clock_system'] :
+            ['safari_system', 'messages_system', 'music_system', 'appstore_system']
+          ).map(appId => {
             const app = systemEApps.find(a => a.id === appId);
             if (!app) return null;
             return (

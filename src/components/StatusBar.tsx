@@ -18,10 +18,34 @@ const StatusBar: React.FC<StatusBarProps> = ({ time, model, onSwipeDown }) => {
   };
   const handleEnd = () => setStartY(null);
 
+  // ePad: ePad слева, часы по центру, батарея смещена влево
+  if (model === 'epad') {
+    return (
+      <div className="absolute top-0 left-0 right-0 z-40 flex justify-between items-center px-8"
+        style={{ height: '20px' }}
+        onMouseDown={e => handleStart(e.clientY)} onMouseMove={e => handleMove(e.clientY)} onMouseUp={handleEnd}
+        onTouchStart={e => handleStart(e.touches[0].clientY)} onTouchMove={e => handleMove(e.touches[0].clientY)} onTouchEnd={handleEnd}>
+        <div className="flex items-center gap-1.5">
+          <span className="text-white text-xs font-bold">ePad</span>
+        </div>
+        <span className="text-white text-sm font-semibold">{timeStr}</span>
+        <div className="flex items-center gap-1 mr-32">
+          <span className="text-white text-xs font-medium">87%</span>
+          <div className="flex items-center">
+            <div className="w-6 h-3 border border-white/80 rounded-[3px] relative">
+              <div className="absolute inset-[2px] bg-green-400 rounded-[1px]" style={{width: '75%'}}/>
+            </div>
+            <div className="w-[2px] h-1.5 bg-white/80 rounded-r-sm ml-[1px]"/>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (model === 'iphone8') {
     return (
       <div className="absolute top-0 left-0 right-0 z-40 flex justify-between items-center px-8"
-        style={{ height: '80px', paddingTop: '28px' }}
+        style={{ height: '20px' }}
         onMouseDown={e => handleStart(e.clientY)} onMouseMove={e => handleMove(e.clientY)} onMouseUp={handleEnd}
         onTouchStart={e => handleStart(e.touches[0].clientY)} onTouchMove={e => handleMove(e.touches[0].clientY)} onTouchEnd={handleEnd}>
         <div className="flex items-center gap-1.5">

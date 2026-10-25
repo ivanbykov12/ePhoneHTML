@@ -1,12 +1,13 @@
 import React, { createContext, useContext } from 'react';
 
-export type PhoneModel = 'iphone8' | 'iphonex' | 'iphone14';
+export type PhoneModel = 'iphone8' | 'iphonex' | 'iphone14' | 'epad';
 
 export const getStatusBarPadding = (model: PhoneModel): string => {
   switch (model) {
-    case 'iphone8': return '80px';
+    case 'iphone8': return '20px';
     case 'iphonex': return '50px';
     case 'iphone14': return '54px';
+    case 'epad': return '20px';
   }
 };
 
@@ -51,6 +52,10 @@ export interface SystemSettings {
   name: string;
   phoneModel: PhoneModel;
   disableIsland: boolean;
+  welcomeCompleted: boolean;
+  region: string;
+  multiTasking: boolean;
+  homeScreenLayout: string[];
 }
 
 export const defaultSettings: SystemSettings = {
@@ -66,6 +71,10 @@ export const defaultSettings: SystemSettings = {
   name: 'ePhone',
   phoneModel: 'iphone14',
   disableIsland: false,
+  welcomeCompleted: false,
+  region: 'Россия',
+  multiTasking: false,
+  homeScreenLayout: [],
 };
 
 interface AppContextType {

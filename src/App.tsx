@@ -76,6 +76,7 @@ function App() {
 
   const loadSystemApps = async () => {
     const systemApps = [
+      'system/welcome.eapp',
       'system/snake.eapp', 'system/tetris.eapp', 'system/game2048.eapp',
       'system/flappy.eapp', 'system/calculator.eapp', 'system/clock.eapp',
       'system/weather.eapp', 'system/settings.eapp', 'system/appstore.eapp',
@@ -101,18 +102,21 @@ function App() {
   const getFrameConfig = () => {
     switch (settings.phoneModel) {
       case 'iphone8':
-        return { width: '375px', height: '667px', borderRadius: '40px', topBezel: '80px', bottomBezel: '80px' };
+        return { width: '375px', height: '667px', borderRadius: '40px', topBezel: '20px', bottomBezel: '80px' };
       case 'iphonex':
         return { width: '375px', height: '812px', borderRadius: '44px', topBezel: '44px', bottomBezel: '34px' };
       case 'iphone14':
         return { width: '390px', height: '844px', borderRadius: '50px', topBezel: '50px', bottomBezel: '40px' };
+      case 'epad':
+        return { width: '810px', height: '1080px', borderRadius: '30px', topBezel: '20px', bottomBezel: '20px' };
     }
   };
 
   const frameConfig = getFrameConfig();
-  const showIsland = settings.phoneModel === 'iphone14' && !settings.disableIsland;
+  const showIsland = (settings.phoneModel === 'iphone14' || settings.phoneModel === 'epad') && !settings.disableIsland;
   const hasNotch = settings.phoneModel === 'iphonex';
   const hasHomeButton = settings.phoneModel === 'iphone8';
+  const isPad = settings.phoneModel === 'epad';
 
   const [scale, setScale] = useState(1);
   useEffect(() => {
@@ -175,7 +179,9 @@ function App() {
               paddingTop: hasHomeButton ? frameConfig.topBezel : '0px',
               paddingBottom: hasHomeButton ? frameConfig.bottomBezel : '0px',
             }}>
-            {isLocked ? (
+            {!settings.welcomeCompleted ? (
+              <AppRenderer appName="welcome_setup" onClose={() => {}} onLock={() => {}} />
+            ) : isLocked ? (
               <LockScreen time={time} onUnlock={unlockPhone} />
             ) : currentApp ? (
               <AppRenderer appName={currentApp} onClose={closeApp} onLock={lockPhone} />
