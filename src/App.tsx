@@ -22,21 +22,71 @@ function App() {
   }, []);
 
   useEffect(() => {
-    loadEApps();
-    loadSystemApps();
+    loadAllApps();
+  }, []);
+
+  const loadAllApps = async () => {
+    // Сначала загружаем системные приложения из файлов (всегда свежие)
+    const systemApps = [
+      'system/welcome.eapp',
+      'system/snake.eapp', 'system/tetris.eapp', 'system/game2048.eapp',
+      'system/flappy.eapp', 'system/calculator.eapp', 'system/clock.eapp',
+      'system/weather.eapp', 'system/settings.eapp', 'system/appstore.eapp',
+      'system/notes.eapp', 'system/photos.eapp', 'system/music.eapp',
+      'system/safari.eapp', 'system/messages.eapp', 'system/maps.eapp',
+      'system/health.eapp'
+    ];
+    
+    const loadedSystem: EApp[] = [];
+    for (const file of systemApps) {
+      try {
+        const response = await fetch(`/apps/${file}`);
+        if (response.ok) loadedSystem.push(await response.json());
+      } catch {}
+    }
+
+    // Загружаем пользовательские приложения из manifest
+    let loadedUser: EApp[] = [];
+    try {
+      const manifestResponse = await fetch('/apps/manifest.json');
+      if (manifestResponse.ok) {
+        const manifest = await manifestResponse.json();
+        for (const file of manifest.apps) {
+          if (!file.startsWith('system/')) {
+            try {
+              const response = await fetch(`/apps/${file}`);
+              if (response.ok) loadedUser.push(await response.json());
+            } catch {}
+          }
+        }
+      }
+    } catch {}
+
+    // Загружаем пользовательские приложения из localStorage (только не системные)
     const saved = localStorage.getItem('customApps');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
-          setCustomApps(prev => [...prev, ...parsed.filter((a: EApp) => !prev.find(p => p.id === a.id))]);
+          parsed.forEach((app: EApp) => {
+            if (!app.isSystem && !loadedUser.find(a => a.id === app.id)) {
+              loadedUser.push(app);
+            }
+          });
         }
       } catch {}
     }
-  }, []);
+
+    // Объединяем: системные из файлов + пользовательские
+    setCustomApps([...loadedSystem, ...loadedUser]);
+  };
 
   useEffect(() => {
-    if (customApps.length > 0) localStorage.setItem('customApps', JSON.stringify(customApps));
+    // Сохраняем в localStorage только пользовательские приложения
+    const userApps = customApps.filter(app => !app.isSystem);
+    if (userApps.length > 0) {
+      localStorage.setItem('customApps', JSON.stringify(userApps));
+    }
   }, [customApps]);
 
   useEffect(() => {
@@ -55,49 +105,7 @@ function App() {
   const lockPhone = () => { setIsLocked(true); setCurrentApp(null); };
   const unlockPhone = () => setIsLocked(false);
 
-  const loadEApps = async () => {
-    try {
-      const manifestResponse = await fetch('/apps/manifest.json');
-      if (!manifestResponse.ok) return;
-      const manifest = await manifestResponse.json();
-      const loadedApps: EApp[] = [];
-      for (const file of manifest.apps) {
-        try {
-          const response = await fetch(`/apps/${file}`);
-          if (response.ok) loadedApps.push(await response.json());
-        } catch {}
-      }
-      setCustomApps(prev => {
-        const existingIds = new Set(prev.map(a => a.id));
-        return [...prev, ...loadedApps.filter(a => !existingIds.has(a.id))];
-      });
-    } catch {}
-  };
 
-  const loadSystemApps = async () => {
-    const systemApps = [
-      'system/welcome.eapp',
-      'system/snake.eapp', 'system/tetris.eapp', 'system/game2048.eapp',
-      'system/flappy.eapp', 'system/calculator.eapp', 'system/clock.eapp',
-      'system/weather.eapp', 'system/settings.eapp', 'system/appstore.eapp',
-      'system/notes.eapp', 'system/photos.eapp', 'system/music.eapp',
-      'system/safari.eapp', 'system/messages.eapp', 'system/maps.eapp',
-      'system/health.eapp'
-    ];
-    const loaded: EApp[] = [];
-    for (const file of systemApps) {
-      try {
-        const response = await fetch(`/apps/${file}`);
-        if (response.ok) loaded.push(await response.json());
-      } catch {}
-    }
-    if (loaded.length > 0) {
-      setCustomApps(prev => {
-        const existingIds = new Set(prev.map(a => a.id));
-        return [...prev, ...loaded.filter(a => !existingIds.has(a.id))];
-      });
-    }
-  };
 
   const getFrameConfig = () => {
     switch (settings.phoneModel) {
