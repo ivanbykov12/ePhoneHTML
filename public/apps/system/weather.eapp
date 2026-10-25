@@ -6,7 +6,7 @@
   "version": "2.0.0",
   "author": "ePhone System",
   "description": "Погода с реальными данными Open-Meteo",
-  "supportedModels": ["iphone8", "iphonex", "iphone14"],
+  "supportedModels": ["iphone8", "iphonex", "iphone14", "epad101"],
   "isSystem": true,
   "eappVersion": "1.1",
   "changelog": "v2.0 - Реальные данные погоды через Open-Meteo API",

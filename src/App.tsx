@@ -110,21 +110,21 @@ function App() {
   const getFrameConfig = () => {
     switch (settings.phoneModel) {
       case 'iphone8':
-        return { width: '375px', height: '667px', borderRadius: '40px', topBezel: '20px', bottomBezel: '80px' };
+        return { width: '375px', height: '667px', borderRadius: '10px', topBezel: '20px', bottomBezel: '80px' };
       case 'iphonex':
         return { width: '375px', height: '812px', borderRadius: '44px', topBezel: '44px', bottomBezel: '34px' };
       case 'iphone14':
         return { width: '390px', height: '844px', borderRadius: '50px', topBezel: '50px', bottomBezel: '40px' };
-      case 'epad':
-        return { width: '810px', height: '1080px', borderRadius: '30px', topBezel: '20px', bottomBezel: '20px' };
+      case 'epad101':
+        return { width: '1080px', height: '810px', borderRadius: '30px', topBezel: '25px', bottomBezel: '20px' };
     }
   };
 
   const frameConfig = getFrameConfig();
-  const showIsland = (settings.phoneModel === 'iphone14' || settings.phoneModel === 'epad') && !settings.disableIsland;
+  const showIsland = (settings.phoneModel === 'iphone14' || settings.phoneModel === 'epad101') && !settings.disableIsland;
   const hasNotch = settings.phoneModel === 'iphonex';
   const hasHomeButton = settings.phoneModel === 'iphone8';
-  const isPad = settings.phoneModel === 'epad';
+  const isPad = settings.phoneModel === 'epad101';
 
   const [scale, setScale] = useState(1);
   useEffect(() => {

@@ -39,7 +39,7 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ content }) => {
   const info = getAppInfo(content || '');
 
   const { settings } = useAppContext();
-  const isPad = settings.phoneModel === 'epad';
+  const isPad = settings.phoneModel === 'epad101';
 
   return (
     <div className={`absolute top-[11px] z-50 flex items-center justify-center ${isPad ? 'right-4' : 'left-1/2 -translate-x-1/2'}`}>

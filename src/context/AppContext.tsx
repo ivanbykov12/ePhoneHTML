@@ -1,13 +1,13 @@
 import React, { createContext, useContext } from 'react';
 
-export type PhoneModel = 'iphone8' | 'iphonex' | 'iphone14' | 'epad';
+export type PhoneModel = 'iphone8' | 'iphonex' | 'iphone14' | 'epad101';
 
 export const getStatusBarPadding = (model: PhoneModel): string => {
   switch (model) {
     case 'iphone8': return '20px';
     case 'iphonex': return '50px';
     case 'iphone14': return '54px';
-    case 'epad': return '20px';
+    case 'epad101': return '25px';
   }
 };
 

@@ -19,10 +19,10 @@ const StatusBar: React.FC<StatusBarProps> = ({ time, model, onSwipeDown }) => {
   const handleEnd = () => setStartY(null);
 
   // ePad: ePad слева, часы по центру, батарея смещена влево
-  if (model === 'epad') {
+  if (model === 'epad101') {
     return (
       <div className="absolute top-0 left-0 right-0 z-40 flex justify-between items-center px-8"
-        style={{ height: '20px' }}
+        style={{ height: '25px', paddingTop: '5px' }}
         onMouseDown={e => handleStart(e.clientY)} onMouseMove={e => handleMove(e.clientY)} onMouseUp={handleEnd}
         onTouchStart={e => handleStart(e.touches[0].clientY)} onTouchMove={e => handleMove(e.touches[0].clientY)} onTouchEnd={handleEnd}>
         <div className="flex items-center gap-1.5">

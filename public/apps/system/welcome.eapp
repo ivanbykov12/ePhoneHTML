@@ -6,7 +6,7 @@
   "version": "1.1.0",
   "author": "ePhone System",
   "description": "Первоначальная настройка устройства (Full Screen Mode)",
-  "supportedModels": ["iphone8", "iphonex", "iphone14", "epad"],
+  "supportedModels": ["iphone8", "iphonex", "iphone14", "epad101"],
   "isSystem": true,
   "eappVersion": "1.1",
   "fullscreen": true,

@@ -24,7 +24,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
   const userEApps = customApps.filter(app => !app.isSystem);
   const desktopEApps = userEApps.filter(app => desktopApps.includes(app.id));
   const folderEApps = userEApps.filter(app => !desktopApps.includes(app.id));
-  const isPad = settings.phoneModel === 'epad';
+  const isPad = settings.phoneModel === 'epad101';
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -57,8 +57,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
     const isMaterial = app.icon?.startsWith('material:');
     const iconContent = isMaterial ? app.icon.replace('material:', '') : (app.icon || '📱');
     const eappVersion = getEAppVersion(app);
-    const sizeClass = size === 'large' ? 'w-14 h-14' : 'w-12 h-12';
-    const iconSize = size === 'large' ? 'text-2xl' : 'text-xl';
+    const sizeClass = size === 'large' ? (isPad ? 'w-16 h-16' : 'w-14 h-14') : 'w-12 h-12';
+    const iconSize = size === 'large' ? (isPad ? 'text-3xl' : 'text-2xl') : 'text-xl';
 
     return (
       <div className={`${sizeClass} rounded-[14px] bg-gradient-to-br ${app.color || 'from-gray-400 to-gray-600'} flex items-center justify-center shadow-lg relative overflow-hidden group`}>
@@ -196,7 +196,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
   return (
     <div className={`w-full h-full bg-gradient-to-b ${getWallpaper()} flex flex-col`} style={{ paddingTop }}>
       <div className="flex-1 px-5 pt-4 overflow-y-auto">
-        <div className="grid grid-cols-4 gap-y-5 gap-x-4">
+        <div className={`grid ${isPad ? 'grid-cols-6' : 'grid-cols-4'} gap-y-5 ${isPad ? 'gap-x-5' : 'gap-x-4'}`}>
           {systemEApps.map((app, i) => (
             <div key={app.id} className="flex flex-col items-center app-icon cursor-pointer relative" onClick={() => onOpenApp(app.id)}
               style={{ animationDelay: `${i * 0.03}s` }}>
