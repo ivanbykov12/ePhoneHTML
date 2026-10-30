@@ -33,6 +33,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
       const text = await file.text();
       const appData = JSON.parse(text);
       if (!appData.id || !appData.name || !appData.code) { alert('Неверный формат .eapp!'); return; }
+      // Защита от «шума»: code обязан быть HTML-разметкой, а не строкой с сырым JSON
+      // (например, случайно экспортированным дампом всего массива приложений).
+      const codeStr = String(appData.code).trim();
+      if (!/^</.test(codeStr) && /^[\[{]/.test(codeStr)) {
+        try { JSON.parse(codeStr); alert('В файле .eapp вместо кода приложения лежит сырой JSON. Импорт отменён.'); return; } catch {}
+      }
       setCustomApps(prev => [...prev.filter(a => a.id !== appData.id), appData]);
       setShowUpload(false);
     } catch { alert('Ошибка чтения файла'); }

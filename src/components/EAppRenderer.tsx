@@ -68,6 +68,23 @@ const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
       customStyleHTML = `<style>${(app as any).style}</style>`;
     }
 
+    // Защита от «шума»: если в app.code по ошибке попал экспортированный JSON
+    // (например, весь массив приложений вида [{...}] или {"apps":[...],"desktopApps":[...]}),
+    // он не должен выводиться на экран как текст. Такие данные просто игнорируются.
+    const isRawJSONPayload = (raw: unknown): boolean => {
+      if (typeof raw !== 'string') return true; // код приложения обязан быть строкой
+      const trimmed = raw.trim();
+      if (!trimmed) return false;
+      // Настоящий HTML-код всегда начинается с тега (<!DOCTYPE, <div, <script...)
+      if (/^\s*</i.test(trimmed)) return false;
+      // Всё, что не является разметкой, но парсится как JSON — это сырые данные, не код
+      if (/^[\[{]/.test(trimmed)) {
+        try { JSON.parse(trimmed); return true; } catch { /* не JSON — оставляем как есть */ }
+      }
+      return false;
+    };
+    const safeAppCode = isRawJSONPayload(app.code) ? '' : (app.code || '');
+
     let backgroundStyle = settings.darkMode ? '#000' : '#fff';
     if (isV2 && (app as any).background) backgroundStyle = (app as any).background;
 
@@ -94,7 +111,7 @@ const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
         ${customStyleHTML}
         ${ePhoneAPI}
       </head>
-      <body>${app.code}</body>
+      <body>${safeAppCode}</body>
       </html>
     `;
 

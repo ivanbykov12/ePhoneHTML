@@ -7,6 +7,24 @@ import AppRenderer from './components/AppRenderer';
 import ControlCenter from './components/ControlCenter';
 import { AppContext, SystemSettings, defaultSettings, PhoneModel, EApp } from './context/AppContext';
 
+// Проверка, что запись — валидное приложение, а не случайно сохранённый сырой JSON.
+// code обязан быть строкой с HTML-разметкой; массивы/объекты/JSON-дамп туда попадать не должны.
+function isValidEApp(app: any): app is EApp {
+  if (!app || typeof app !== 'object') return false;
+  if (typeof app.id !== 'string' || !app.id) return false;
+  if (typeof app.name !== 'string' || !app.name) return false;
+  if (typeof app.code !== 'string') return false;
+  const trimmed = app.code.trim();
+  if (!trimmed) return false;
+  // Настоящий код приложения начинается с тега (<div, <script, <!DOCTYPE...)
+  if (/^</.test(trimmed)) return true;
+  // Если это парсящийся JSON (например, дамп всего массива приложений) — мусор, отклоняем
+  if (/^[\[{]/.test(trimmed)) {
+    try { JSON.parse(trimmed); return false; } catch {}
+  }
+  return true; // прочий текст считаем кодом (iframe безопасно экранирует вывод)
+}
+
 function App() {
   const [isLocked, setIsLocked] = useState(true);
   const [currentApp, setCurrentApp] = useState<string | null>(null);
@@ -55,7 +73,10 @@ function App() {
           if (!file.startsWith('system/')) {
             try {
               const response = await fetch(`/apps/${file}`);
-              if (response.ok) loadedUser.push(await response.json());
+              if (response.ok) {
+                const appJson = await response.json();
+                if (isValidEApp(appJson)) loadedUser.push(appJson);
+              }
             } catch {}
           }
         }
@@ -69,6 +90,9 @@ function App() {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
           parsed.forEach((app: EApp) => {
+            // Пропускаем мусор: записи без обязательных полей или с code,
+            // содержащим сырой JSON вместо HTML-кода приложения
+            if (!isValidEApp(app)) return;
             if (!app.isSystem && !loadedUser.find(a => a.id === app.id)) {
               loadedUser.push(app);
             }
