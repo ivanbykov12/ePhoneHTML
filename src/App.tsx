@@ -67,8 +67,13 @@ function App() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          parsed.forEach((app: EApp) => {
+        // Защита от двойного кодирования всего массива: строка внутри строки
+        let list: unknown = parsed;
+        for (let i = 0; i < 3 && typeof list === 'string'; i++) {
+          try { list = JSON.parse(list); } catch { break; }
+        }
+        if (Array.isArray(list)) {
+          list.forEach((app: EApp) => {
             // Санитайзер: защита от двойного JSON-кодирования поля code
             // (старые записи могли быть сохранены как JSON.stringify(JSON.stringify(...)))
             if (typeof app.code === 'string') {
@@ -90,6 +95,11 @@ function App() {
             } else if (app.code && typeof app.code === 'object' && typeof (app.code as any).code === 'string') {
               app.code = (app.code as any).code;
             }
+            // Пропускаем повреждённые/неполные записи (например, обрезанный хвост JSON
+            // вида `"}],"desktopApps":"[]"};` из старых версий хранилища) — они не должны
+            // попадать в список приложений и тем более выводиться в интерфейс.
+            const codeOk = typeof app.code === 'string' && /<[a-zA-Z!/]/.test(app.code);
+            if (!app.id || !app.name || !codeOk) return;
             if (!app.isSystem && !loadedUser.find(a => a.id === app.id)) {
               loadedUser.push(app);
             }

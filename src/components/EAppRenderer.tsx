@@ -10,17 +10,28 @@ interface EAppRendererProps {
 // или объект вида {"id":..., "code":"<div..."}), рекурсивно распаковываем его,
 // пока не получим чистый HTML/JS. Чистый HTML никогда не начинается с '{' или '"',
 // поэтому такие строки не затрагиваются.
-// Признаки двойного JSON-кодирования: экранированные кавычки \" или переводы строк \n
-// в виде текста. Нормальный HTML-код приложения их не содержит.
+// Эвристический «мусорный» остаток: строка, которая выглядит как хвост сериализованного
+// JSON (например `"}],"desktopApps":"[]"};`) — такое никогда не бывает нормальным HTML.
+const isJsonGarbage = (s: string): boolean => {
+  const t = s.trim();
+  if (!t) return false;
+  if (/^[}\];"]/.test(t)) return true;                      // начинается с закрывающих скобок/кавычек
+  if (!t.includes('<') && /["{}]|;$/.test(t) && /^[^<>]*["}]/.test(t)) return true; // без тегов, но с JSON-символами
+  return false;
+};
+
+// Признаки двойного JSON-кодирования: много экранированных последовательностей \" и \n
+// как текста. Чистый HTML содержит такие последовательности крайне редко, поэтому
+// требуем несколько вхождений подряд, чтобы не повредить код с редкими \" внутри.
 const looksDoubleEncoded = (s: string): boolean => {
-  return /\\"/.test(s) || /\\n/.test(s);
+  return (s.match(/\\"/g)?.length || 0) >= 3 || (s.match(/\\n/g)?.length || 0) >= 3;
 };
 
 const unwrapDoubleEncoded = (input: string, depth = 0): string => {
   if (depth > 5) return input;
   const code = input.trim();
   // Чистый HTML (начинается с тега/комментария) и не похож на escaped-JSON — не трогаем
-  const startsLikeHtml = code.startsWith('<');
+  const startsLikeHtml = code.startsWith('<') && !looksDoubleEncoded(code);
   if (!startsLikeHtml && (code.startsWith('{') || code.startsWith('"'))) {
     try {
       const parsed = JSON.parse(code);
@@ -30,8 +41,7 @@ const unwrapDoubleEncoded = (input: string, depth = 0): string => {
       }
     } catch { /* не JSON — это обычный код, оставляем как есть */ }
   }
-  // Если внутри иначе всё ещё видны следы двойного кодирования (\" и \n как текст) —
-  // пробуем распарсить содержимое как JSON-строку и распаковать один раз.
+  // Следы двойного кодирования (\" и \n как текст) — пробуем распаковать один уровень.
   if (looksDoubleEncoded(code)) {
     try {
       const parsed = JSON.parse(`"${code}"`);
@@ -44,14 +54,24 @@ const unwrapDoubleEncoded = (input: string, depth = 0): string => {
 };
 
 const normalizeAppCode = (raw: unknown): string => {
+  let out = '';
   if (typeof raw !== 'string') {
     // Защита на случай, если code пришёл как объект (например, сохранён без сериализации)
     if (raw && typeof raw === 'object' && typeof (raw as any).code === 'string') {
-      return unwrapDoubleEncoded((raw as any).code);
+      out = unwrapDoubleEncoded((raw as any).code);
     }
-    return '';
+  } else {
+    out = unwrapDoubleEncoded(raw);
   }
-  return unwrapDoubleEncoded(raw);
+  // Страж: никогда не выводим в интерфейс обрывки сериализованного JSON.
+  // Если после всех распаковок результат выглядит как JSON-мусор и не содержит
+  // ни одного HTML-тега — считаем его непригодным и показываем заглушку вместо сырых данных.
+  if (isJsonGarbage(out) && !/<[a-zA-Z!/]/.test(out)) {
+    return '<div style="display:flex;align-items:center;justify-content:center;height:100vh;' +
+      'font-family:sans-serif;color:#888;background:transparent;font-size:14px;text-align:center;padding:20px;">' +
+      'Данные приложения повреждены.<br/>Удалите приложение из Custom Apps и добавьте снова.</div>';
+  }
+  return out;
 };
 
 const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
@@ -140,6 +160,19 @@ const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
 
     const ePhoneAPI = `
       <script>
+        // Страж на случай, если srcdoc пришёл обрезанным (сломанный синтаксис инлайн-скрипта):
+        // в iframe остаётся только этот валидный скрипт, а битый хвост выводится как текст.
+        // Показываем аккуратную заглушку вместо «сырого кода».
+        window.addEventListener('error', function (ev) {
+          if (ev && ev.message && /Invalid or unexpected token|Unexpected end of input|Unexpected string/.test(ev.message)) {
+            try {
+              document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;' +
+                'font-family:sans-serif;color:#888;font-size:14px;text-align:center;padding:20px;">' +
+                '\u041f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u0435 \u043d\u0435 \u0437\u0430\u043f\u0443\u0441\u0442\u0438\u043b\u043e\u0441\u044c: \u0434\u0430\u043d\u043d\u044b\u0435 \u043f\u043e\u0432\u0440\u0435\u0436\u0434\u0435\u043d\u044b.<br/>' +
+                '\u041f\u0435\u0440\u0435\u0443\u0441\u0442\u0430\u043d\u043e\u0432\u0438\u0442\u0435 \u043f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u0435 \u0438\u0437 App Store \u0438\u043b\u0438 Custom Apps.</div>';
+            } catch (e) {}
+          }
+        });
         window.ePhone = {
           version: '${appVersion}',
           getScreenSize: () => ({ width: 390, height: 700 }),
