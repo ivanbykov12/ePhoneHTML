@@ -25,7 +25,50 @@ function App() {
     loadAllApps();
   }, []);
 
+  // Полная санация ключей хранилища от повреждённых/двойных записей.
+  // Старые версии приложения могли сохранить в localStorage «хвосты» сериализованного
+  // JSON вида `"}],"desktopApps":"[]"};` — такой мусор никогда не должен попадать ни
+  // в состояние, ни на экран.
+  const sanitizeStorageEntries = () => {
+    try {
+      // desktopApps: оставляем только массив строковых id
+      const rawDesktop = localStorage.getItem('desktopApps');
+      if (rawDesktop !== null) {
+        let ok = false;
+        try {
+          const parsed = JSON.parse(rawDesktop);
+          ok = Array.isArray(parsed);
+          if (ok) {
+            const ids = parsed.filter((x: unknown) => typeof x === 'string');
+            localStorage.setItem('desktopApps', JSON.stringify(ids));
+          }
+        } catch { /* не JSON — мусор */ }
+        if (!ok) localStorage.removeItem('desktopApps');
+      }
+
+      // customApps: оставляем только полноценные объекты приложений с HTML-кодом
+      const rawCustom = localStorage.getItem('customApps');
+      if (rawCustom !== null) {
+        let cleaned: EApp[] | null = null;
+        try {
+          const parsed = JSON.parse(rawCustom);
+          if (Array.isArray(parsed)) {
+            cleaned = parsed.filter((a: any) =>
+              a && typeof a === 'object' &&
+              typeof a.id === 'string' && a.id &&
+              typeof a.name === 'string' && a.name &&
+              typeof a.code === 'string' && /<[a-zA-Z!/]/.test(a.code)
+            );
+          }
+        } catch { /* не JSON — мусор */ }
+        if (cleaned === null) localStorage.removeItem('customApps');
+        else localStorage.setItem('customApps', JSON.stringify(cleaned));
+      }
+    } catch {}
+  };
+
   const loadAllApps = async () => {
+    sanitizeStorageEntries();
     // Сначала загружаем системные приложения из файлов (всегда свежие)
     const systemApps = [
       'system/welcome.eapp',
@@ -113,8 +156,25 @@ function App() {
   };
 
   useEffect(() => {
-    // Сохраняем в localStorage только пользовательские приложения
-    const userApps = customApps.filter(app => !app.isSystem);
+    // Сохраняем в localStorage только пользовательские приложения.
+    // Перед записью — принудительная нормализация поля code (защита от двойного
+    // JSON-кодирования: старые версии могли сохранить строку как JSON.stringify(JSON.stringify(...)),
+    // из-за чего при загрузке на экране появлялся «сырой» escaped-JSON).
+    const normalizeCode = (raw: unknown): string => {
+      let c = typeof raw === 'string' ? raw.trim() : '';
+      for (let i = 0; i < 3 && c; i++) {
+        if (!(c.startsWith('{') || c.startsWith('"'))) break;
+        try {
+          const inner = JSON.parse(c);
+          if (typeof inner === 'string') { c = inner.trim(); continue; }
+          if (inner && typeof inner === 'object' && typeof inner.code === 'string') { c = inner.code.trim(); continue; }
+        } catch { break; }
+        break;
+      }
+      return c;
+    };
+    const userApps = customApps.filter(app => !app.isSystem)
+      .map(app => ({ ...app, code: normalizeCode(app.code) }));
     if (userApps.length > 0) {
       localStorage.setItem('customApps', JSON.stringify(userApps));
     }

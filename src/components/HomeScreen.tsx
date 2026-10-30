@@ -15,7 +15,33 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
 
   useEffect(() => {
     const saved = localStorage.getItem('desktopApps');
-    if (saved) { try { setDesktopApps(JSON.parse(saved)); } catch {} }
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        // Строгая защита: в состояние попадают ТОЛЬКО строковые id приложений.
+        // Любые обрывки JSON/объекты из повреждённого хранилища игнорируются —
+        // они никогда не должны рендериться как текст.
+        if (Array.isArray(parsed)) {
+          setDesktopApps(parsed.filter((x): x is string => typeof x === 'string'));
+        }
+      } catch {}
+    }
+  }, []);
+
+  // Синхронизация с изолированным iframe (ePhone.storage('desktopApps', ...))
+  useEffect(() => {
+    const onStorageChanged = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { key: string; value: string } | undefined;
+      if (!detail || detail.key !== 'desktopApps') return;
+      try {
+        const parsed = JSON.parse(detail.value);
+        if (Array.isArray(parsed)) {
+          setDesktopApps(parsed.filter((x): x is string => typeof x === 'string'));
+        }
+      } catch {}
+    };
+    window.addEventListener('eappStorageChanged', onStorageChanged);
+    return () => window.removeEventListener('eappStorageChanged', onStorageChanged);
   }, []);
 
   useEffect(() => { localStorage.setItem('desktopApps', JSON.stringify(desktopApps)); }, [desktopApps]);

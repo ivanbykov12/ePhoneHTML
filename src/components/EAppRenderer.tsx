@@ -71,6 +71,18 @@ const normalizeAppCode = (raw: unknown): string => {
       'font-family:sans-serif;color:#888;background:transparent;font-size:14px;text-align:center;padding:20px;">' +
       'Данные приложения повреждены.<br/>Удалите приложение из Custom Apps и добавьте снова.</div>';
   }
+  // Защита от обрезанного кода: незакрытый <script> приводит к SyntaxError, и браузер
+  // начинает выводить хвост файла как текст («JSON-мусор» на экране). Закрываем теги.
+  const openScripts = (out.match(/<script\b[^>]*>/gi) || []).length;
+  const closeScripts = (out.match(/<\/script\s*>/gi) || []).length;
+  if (openScripts > closeScripts) {
+    out += '\n' + '</script>'.repeat(openScripts - closeScripts);
+  }
+  const openStyles = (out.match(/<style\b[^>]*>/gi) || []).length;
+  const closeStyles = (out.match(/<\/style\s*>/gi) || []).length;
+  if (openStyles > closeStyles) {
+    out += '\n' + '</style>'.repeat(openStyles - closeStyles);
+  }
   return out;
 };
 
