@@ -189,8 +189,15 @@ const WidgetsRow: React.FC<WidgetsRowProps> = ({ onOpenApp }) => {
   const [enabled, setEnabled] = useState<WidgetId[]>(() => {
     try {
       const saved = localStorage.getItem('ephone_widgets');
-      return saved ? JSON.parse(saved) : ['weather', 'clock'];
-    } catch { return ['weather', 'clock']; }
+      const parsed = saved ? JSON.parse(saved) : null;
+      // Строгая защита: принимаем только массив строковых id известных виджетов —
+      // повреждённые записи хранилища не должны попадать в состояние/рендер.
+      if (Array.isArray(parsed)) {
+        const known = Object.keys(WIDGET_DEFS) as WidgetId[];
+        return parsed.filter((x): x is WidgetId => typeof x === 'string' && (known as string[]).includes(x));
+      }
+    } catch {}
+    return ['weather', 'clock'];
   });
   const [showPicker, setShowPicker] = useState(false);
 

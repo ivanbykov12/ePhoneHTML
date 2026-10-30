@@ -34,10 +34,13 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [notifications, setNotifications] = React.useState<AppNotification[]>(() => {
     try {
       const saved = localStorage.getItem('ephone_notifications');
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
+      const parsed = saved ? JSON.parse(saved) : null;
+      // Строгая защита: только полноценные объекты уведомлений (никаких обрывков JSON)
+      if (Array.isArray(parsed)) {
+        return parsed.filter((n: any) => n && typeof n === 'object' && typeof n.title === 'string');
+      }
+    } catch {}
+    return [];
   });
 
   React.useEffect(() => {
