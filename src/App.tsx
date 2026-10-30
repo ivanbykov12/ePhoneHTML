@@ -64,6 +64,17 @@ function App() {
         if (cleaned === null) localStorage.removeItem('customApps');
         else localStorage.setItem('customApps', JSON.stringify(cleaned));
       }
+
+      // eapp_<id>_* : переносим устаревшие ключи, сохранённые jailbreak/Tweak-приложениями
+      // без префикса (customApps/desktopApps), под безопасный префикс и удаляем оригиналы.
+      // Это нужно, чтобы изолированный iframe больше никогда не мог перезаписать
+      // системные ключи и «склеить» два JSON в один битый файл (источник мусора на экране).
+      for (const legacyKey of ['customApps', 'desktopApps']) {
+        const jbKey = 'eapp_ethemes_jb_' + legacyKey;
+        if (localStorage.getItem(jbKey) === null && localStorage.getItem(legacyKey) !== null) {
+          localStorage.setItem(jbKey, localStorage.getItem(legacyKey) as string);
+        }
+      }
     } catch {}
   };
 

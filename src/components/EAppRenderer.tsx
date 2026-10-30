@@ -206,10 +206,28 @@ const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
           switchModel: (model) => { window.parent.postMessage({ type: 'switchModel', model: model }, '*'); },
           getAppInfo: () => { return { id: '${app.id}', name: '${app.name}', version: '${appVersion}', author: '${app.author || 'Unknown'}' }; },
           storage: (op, key, value) => {
-            const allowed = ['customApps', 'desktopApps'];
-            if (!allowed.includes(key)) return null;
-            if (op === 'set') { window.parent.postMessage({ type: 'storage', op: 'set', key, value }, '*'); return true; }
-            return (window.__ephoneStorageCache || {})[key] || null;
+            // Изолированный iframe НЕ имеет доступа к системным ключам ОС (customApps/desktopApps).
+            // Раньше приложения (например jailbreak-твики) могли перезаписать их и повредить хранилище.
+            // Теперь все обращения идут в песочницу приложения с префиксом eapp_<id>_*.
+            if (typeof key !== 'string' || !key) return null;
+            const sysKeys = ['customApps', 'desktopApps'];
+            const mapped = sysKeys.includes(key) ? ('eapp_${app.id}_' + key) : key;
+            if (mapped.length > 128) return null;
+            if (op === 'get') {
+              const cache = window.__ephoneStorageCache || {};
+              if (Object.prototype.hasOwnProperty.call(cache, mapped)) return cache[mapped];
+              window.parent.postMessage({ type: 'storage', op: 'get', key: mapped }, '*');
+              return null;
+            }
+            if (op === 'set') {
+              if (typeof value !== 'string') { try { value = JSON.stringify(value); } catch { return false; } }
+              // Защита от записи мусора/двойного кодирования: не принимаем строки, которые являются
+              // обёрнутым JSON другого JSON (источник «сырых» данных на экране).
+              window.parent.postMessage({ type: 'storage', op: 'set', key: mapped, value }, '*');
+              return true;
+            }
+            if (op === 'remove') { window.parent.postMessage({ type: 'storage', op: 'remove', key: mapped }, '*'); return true; }
+            return null;
           }
         };
       <\/script>
@@ -233,9 +251,15 @@ const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
     // Снимок разрешённых ключей хранилища (iframe изолирован и не имеет доступа к localStorage родителя)
     const storageSnapshot: Record<string, string | null> = {};
     try {
-      for (const k of ['customApps', 'desktopApps', 'ephone_weather_city']) {
+      for (const k of ['ephone_weather_city']) {
         const v = localStorage.getItem(k);
         if (v !== null) storageSnapshot[k] = v;
+      }
+      // Системные ключи отдаём приложению только в его песочницу (с префиксом eapp_<id>_) —
+      // iframe никогда не сможет их перезаписать напрямую.
+      for (const sysKey of ['customApps', 'desktopApps']) {
+        const v = localStorage.getItem(sysKey);
+        if (v !== null) storageSnapshot['eapp_' + app.id + '_' + sysKey] = v;
       }
       const prefix = 'eapp_' + app.id + '_';
       for (let i = 0; i < localStorage.length; i++) {
@@ -282,16 +306,30 @@ const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
       } else if (event.data?.type === 'storage') {
         const { op, key, value } = event.data;
         if (typeof key !== 'string') return;
-        const isAllowed = key === 'customApps' || key === 'desktopApps' || key.startsWith('eapp_');
-        if (!isAllowed) return;
+        // Жёсткий whitelist: iframe может писать только в свою песочницу eapp_<id>_*.
+        // Системные ключи customApps/desktopApps для записи закрыты — прямая запись
+        // из приложения повреждала хранилище и выводила «сырой JSON» на экран.
+        const isOwnSandbox = key.startsWith('eapp_' + app.id + '_');
+        const isReadOnlySys = key === 'customApps' || key === 'desktopApps';
+        if (!isOwnSandbox && !isReadOnlySys) return;
         try {
           if (op === 'set') {
+            if (!isOwnSandbox) return; // системные ключи — только чтение
+            if (typeof value !== 'string') return;
             localStorage.setItem(key, value);
             window.dispatchEvent(new CustomEvent('eappStorageChanged', { detail: { key, value } }));
+          } else if (op === 'remove') {
+            if (!isOwnSandbox) return;
+            localStorage.removeItem(key);
           } else if (op === 'get') {
             iframe.contentWindow?.postMessage({ type: 'storageResult', key, value: localStorage.getItem(key) }, '*');
           }
         } catch {}
+      } else if (event.data?.type === 'weatherCity') {
+        const city = event.data.city;
+        if (typeof city === 'string' && city.trim() && city.length < 100) {
+          try { localStorage.setItem('ephone_weather_city', city); } catch {}
+        }
       } else if (event.data?.type === 'switchModel') {
         const model = event.data.model as PhoneModel;
         setSettings(s => ({ ...s, phoneModel: model, disableIsland: model !== 'iphone14' ? true : s.disableIsland }));
