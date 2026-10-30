@@ -5,6 +5,7 @@ import StatusBar from './components/StatusBar';
 import DynamicIsland from './components/DynamicIsland';
 import AppRenderer from './components/AppRenderer';
 import ControlCenter from './components/ControlCenter';
+import AlwaysOnDisplay from './components/AlwaysOnDisplay';
 import { AppContext, SystemSettings, defaultSettings, PhoneModel, EApp } from './context/AppContext';
 
 // Проверка, что запись — валидное приложение, а не случайно сохранённый сырой JSON.
@@ -33,6 +34,24 @@ function App() {
   const [time, setTime] = useState(new Date());
   const [customApps, setCustomApps] = useState<EApp[]>([]);
   const [showControlCenter, setShowControlCenter] = useState(false);
+  // Экран «выключен»: на телефоне показывается AOD (или полная темнота, если AOD отключён)
+  const [screenOff, setScreenOff] = useState(false);
+
+  useEffect(() => {
+    try {
+      const savedSettings = localStorage.getItem('systemSettings');
+      if (savedSettings) {
+        const parsed = JSON.parse(savedSettings);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          setSettings(prev => ({ ...prev, ...defaultSettings, ...parsed }));
+        }
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('systemSettings', JSON.stringify(settings));
+  }, [settings]);
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
@@ -192,21 +211,28 @@ function App() {
           }}>
           
           {/* Dynamic Island */}
-          {showIsland && <DynamicIsland content={islandContent} />}
+          {showIsland && !screenOff && <DynamicIsland content={islandContent} />}
 
           {/* Notch */}
-          {hasNotch && (
+          {hasNotch && !screenOff && (
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-7 bg-black rounded-b-[20px] z-50" />
           )}
 
           {/* Status Bar */}
-          <StatusBar time={time} model={settings.phoneModel} onSwipeDown={() => setShowControlCenter(true)} />
+          {!screenOff && <StatusBar time={time} model={settings.phoneModel} onSwipeDown={() => setShowControlCenter(true)} />}
 
           {/* Control Center */}
-          <ControlCenter />
+          {!screenOff && <ControlCenter />}
 
           {/* Content */}
-          {!settings.welcomeCompleted ? (
+          {screenOff ? (
+            settings.aodEnabled ? (
+              <AlwaysOnDisplay time={time} onTapWake={() => setScreenOff(false)} />
+            ) : (
+              /* AOD выключен — полностью тёмный экран, тап включает его обратно */
+              <div className="absolute inset-0 z-[60] bg-black cursor-pointer" onClick={() => setScreenOff(false)} />
+            )
+          ) : !settings.welcomeCompleted ? (
             /* Welcome Setup - Full Screen */
             <div className="w-full h-full relative overflow-hidden">
               <AppRenderer appName="welcome_setup" onClose={() => {}} onLock={() => {}} />
@@ -228,7 +254,7 @@ function App() {
           )}
 
           {/* Home Button (iPhone 8) */}
-          {hasHomeButton && (
+          {hasHomeButton && !screenOff && (
             <div className="absolute left-1/2 -translate-x-1/2 w-14 h-14 rounded-full border-2 border-gray-600/50 bg-black/50 cursor-pointer active:bg-gray-800/50 flex items-center justify-center backdrop-blur-sm transition-all"
               style={{ bottom: '18px' }}
               onClick={() => { if (currentApp) closeApp(); else if (!isLocked) lockPhone(); }}>
@@ -237,13 +263,20 @@ function App() {
           )}
 
           {/* Home Indicator */}
-          {!hasHomeButton && (
+          {!hasHomeButton && !screenOff && (
             <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-white/40 rounded-full cursor-pointer active:bg-white/60 transition-colors"
               onClick={() => { if (currentApp) closeApp(); else if (!isLocked) lockPhone(); }} />
           )}
 
           {/* Side Buttons */}
-          <div className="absolute -right-[5px] top-[180px] w-[3px] h-[60px] bg-gradient-to-b from-gray-600 to-gray-800 rounded-r-sm" />
+          {/* Кнопка питания (справа) — выключает экран (AOD) / включает его */}
+          <div className="absolute -right-[6px] top-[200px] w-[5px] h-[80px] bg-gradient-to-b from-gray-500 to-gray-700 rounded-r-md cursor-pointer z-[70] hover:from-gray-400 hover:to-gray-600 transition-colors"
+             title={screenOff ? 'Включить экран' : 'Выключить экран (AOD)'}
+             onClick={() => setScreenOff(v => !v)}>
+            <span className="absolute right-[9px] top-1/2 -translate-y-1/2 text-[9px] text-white/30 whitespace-nowrap pointer-events-none select-none">
+              {screenOff ? '⏻ вкл' : '⏻ выкл'}
+            </span>
+          </div>
           <div className="absolute -left-[5px] top-[150px] w-[3px] h-[28px] bg-gradient-to-b from-gray-600 to-gray-800 rounded-l-sm" />
           <div className="absolute -left-[5px] top-[200px] w-[3px] h-[45px] bg-gradient-to-b from-gray-600 to-gray-800 rounded-l-sm" />
           <div className="absolute -left-[5px] top-[260px] w-[3px] h-[45px] bg-gradient-to-b from-gray-600 to-gray-800 rounded-l-sm" />

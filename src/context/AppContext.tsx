@@ -39,7 +39,21 @@ export const getEAppVersion = (app: EApp): '1.0' | '1.1' => {
   return '1.0';
 };
 
+export type AODPosition = 'top-left' | 'top-center' | 'top-right' | 'center' | 'bottom-left' | 'bottom-center' | 'bottom-right';
+
+export const AOD_POSITION_LABELS: Record<AODPosition, string> = {
+  'top-left': 'Сверху слева',
+  'top-center': 'Сверху по центру',
+  'top-right': 'Сверху справа',
+  'center': 'По центру',
+  'bottom-left': 'Снизу слева',
+  'bottom-center': 'Снизу по центру',
+  'bottom-right': 'Снизу справа',
+};
+
 export interface SystemSettings {
+  aodEnabled: boolean;
+  aodPosition: AODPosition;
   wallpaper: string;
   darkMode: boolean;
   brightness: number;
@@ -59,6 +73,8 @@ export interface SystemSettings {
 }
 
 export const defaultSettings: SystemSettings = {
+  aodEnabled: true,
+  aodPosition: 'top-center',
   wallpaper: 'gradient1',
   darkMode: true,
   brightness: 100,
