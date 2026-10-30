@@ -29,8 +29,7 @@ const AlwaysOnDisplay: React.FC<AODProps> = ({ time, onTapWake }) => {
     <div
       className="absolute inset-0 z-[60] bg-black cursor-pointer select-none overflow-hidden"
       style={{ borderRadius: 'inherit' }}
-      onClick={onTapWake}
-      onTouchStart={onTapWake}>
+      onClick={onTapWake}>
       {/* Едва заметное радиальное свечение, имитирующее OLED AOD */}
       <div className="absolute inset-0"
         style={{ background: 'radial-gradient(ellipse at 50% 40%, rgba(255,255,255,0.045) 0%, rgba(0,0,0,0) 60%)' }} />

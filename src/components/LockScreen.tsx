@@ -15,21 +15,32 @@ const LockScreen: React.FC<LockScreenProps> = ({ time, onUnlock }) => {
   const timeStr = time.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
   const dateStr = time.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
 
-  const handleStart = (clientY: number) => { setIsDragging(true); setStartY(clientY); };
+  // Защита от «двойного срабатывания»: жест и глобальный обработчик не должны
+  // обрабатывать одно и то же окончание свайпа дважды.
+  const endedRef = React.useRef(false);
+
+  const handleStart = (clientY: number) => { endedRef.current = false; setIsDragging(true); setStartY(clientY); };
   const handleMove = (clientY: number) => {
     if (!isDragging) return;
     setDragY(Math.max(0, startY - clientY));
   };
   const handleEnd = () => {
-    if (isDragging) {
-      if (dragY > 80) onUnlock();
-      setIsDragging(false);
-      setDragY(0);
-    }
+    if (!isDragging || endedRef.current) return;
+    endedRef.current = true;
+    if (dragY > 80) onUnlock();
+    setIsDragging(false);
+    setDragY(0);
   };
 
   useEffect(() => {
-    const handleGlobalEnd = () => { if (isDragging) { if (dragY > 80) onUnlock(); setIsDragging(false); setDragY(0); } };
+    const handleGlobalEnd = () => {
+      if (isDragging && !endedRef.current) {
+        endedRef.current = true;
+        if (dragY > 80) onUnlock();
+        setIsDragging(false);
+        setDragY(0);
+      }
+    };
     window.addEventListener('mouseup', handleGlobalEnd);
     window.addEventListener('touchend', handleGlobalEnd);
     return () => { window.removeEventListener('mouseup', handleGlobalEnd); window.removeEventListener('touchend', handleGlobalEnd); };
@@ -82,14 +93,14 @@ const LockScreen: React.FC<LockScreenProps> = ({ time, onUnlock }) => {
         </div>
       </div>
 
-      {/* Bottom Actions */}
-      <div className="absolute bottom-20 left-0 right-0 flex justify-between px-10 z-10">
-        <div className="w-12 h-12 glass rounded-full flex items-center justify-center cursor-pointer active:scale-90 transition-transform shadow-lg">
+      {/* Bottom Actions (декоративные — не перехватывают свайп) */}
+      <div className="absolute bottom-20 left-0 right-0 flex justify-between px-10 z-10 pointer-events-none">
+        <div className="w-12 h-12 glass rounded-full flex items-center justify-center shadow-lg">
           <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
           </svg>
         </div>
-        <div className="w-12 h-12 glass rounded-full flex items-center justify-center cursor-pointer active:scale-90 transition-transform shadow-lg">
+        <div className="w-12 h-12 glass rounded-full flex items-center justify-center shadow-lg">
           <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -97,11 +108,16 @@ const LockScreen: React.FC<LockScreenProps> = ({ time, onUnlock }) => {
         </div>
       </div>
 
-      {/* Swipe hint */}
-      <div className="absolute bottom-6 left-0 right-0 flex flex-col items-center z-10">
-        <svg className="w-5 h-5 text-white/40 animate-bounce mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      {/* Зона разблокировки: свайп вверх ИЛИ просто нажатие — надёжно срабатывает в любом случае */}
+      <div className="absolute bottom-0 left-0 right-0 h-32 z-20 flex flex-col items-center justify-end pb-6 cursor-pointer select-none"
+        onMouseDown={e => { e.stopPropagation(); handleStart(e.clientY); }}
+        onMouseUp={e => { e.stopPropagation(); const dist = startY - e.clientY; handleEnd(); if (dist > 80 || dist < 10) onUnlock(); }}
+        onTouchStart={e => { e.stopPropagation(); handleStart(e.touches[0].clientY); }}
+        onTouchEnd={e => { e.stopPropagation(); const dist = startY - (e.changedTouches?.[0]?.clientY ?? startY); handleEnd(); if (dist > 80 || dist < 10) onUnlock(); }}>
+        <svg className="w-5 h-5 text-white/50 animate-bounce mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
         </svg>
+        <span className="text-white/50 text-xs tracking-wide">Свайп вверх или нажмите, чтобы разблокировать</span>
       </div>
     </div>
   );
