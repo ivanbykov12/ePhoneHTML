@@ -69,10 +69,20 @@ function App() {
       // без префикса (customApps/desktopApps), под безопасный префикс и удаляем оригиналы.
       // Это нужно, чтобы изолированный iframe больше никогда не мог перезаписать
       // системные ключи и «склеить» два JSON в один битый файл (источник мусора на экране).
+      // Проверяем сохранённые твиком копии: если канонический ключ повреждён
+      // (не парсится как валидный JSON), восстанавливаем его из последней валидной копии.
+      const validJson = (v: string | null): boolean => {
+        if (v === null) return false;
+        try { JSON.parse(v); return true; } catch { return false; }
+      };
       for (const legacyKey of ['customApps', 'desktopApps']) {
         const jbKey = 'eapp_ethemes_jb_' + legacyKey;
-        if (localStorage.getItem(jbKey) === null && localStorage.getItem(legacyKey) !== null) {
-          localStorage.setItem(jbKey, localStorage.getItem(legacyKey) as string);
+        const canonical = localStorage.getItem(legacyKey);
+        const copy = localStorage.getItem(jbKey);
+        if (copy === null && canonical !== null && validJson(canonical)) {
+          localStorage.setItem(jbKey, canonical);
+        } else if (canonical !== null && !validJson(canonical) && validJson(copy)) {
+          localStorage.setItem(legacyKey, copy as string);
         }
       }
     } catch {}

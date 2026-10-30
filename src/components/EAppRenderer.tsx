@@ -185,12 +185,13 @@ const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
             } catch (e) {}
           }
         });
+        var SANDBOX_PREFIX = 'eapp_${app.id}_';
         window.ePhone = {
           version: '${appVersion}',
           getScreenSize: () => ({ width: 390, height: 700 }),
           vibrate: (pattern) => { if (navigator.vibrate) navigator.vibrate(pattern); },
-          save: (key, value) => { window.parent.postMessage({ type: 'storage', op: 'set', key: 'eapp_${app.id}_' + key, value: JSON.stringify(value) }, '*'); },
-          load: (key) => { const fullKey = 'eapp_${app.id}_' + key;
+          save: (key, value) => { var fullKey = SANDBOX_PREFIX + key; if (window.__ephoneStorageCache) window.__ephoneStorageCache[fullKey] = JSON.stringify(value); window.parent.postMessage({ type: 'storage', op: 'set', key: fullKey, value: JSON.stringify(value) }, '*'); },
+          load: (key) => { const fullKey = SANDBOX_PREFIX + key;
             if (window.__ephoneStorageCache && Object.prototype.hasOwnProperty.call(window.__ephoneStorageCache, fullKey)) {
               try { return JSON.parse(window.__ephoneStorageCache[fullKey]); } catch { return null; }
             }
@@ -211,7 +212,7 @@ const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
             // Теперь все обращения идут в песочницу приложения с префиксом eapp_<id>_*.
             if (typeof key !== 'string' || !key) return null;
             const sysKeys = ['customApps', 'desktopApps'];
-            const mapped = sysKeys.includes(key) ? ('eapp_${app.id}_' + key) : key;
+            const mapped = sysKeys.includes(key) ? (SANDBOX_PREFIX + key) : key;
             if (mapped.length > 128) return null;
             if (op === 'get') {
               const cache = window.__ephoneStorageCache || {};
@@ -230,6 +231,13 @@ const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
             return null;
           }
         };
+        window.addEventListener('message', function (ev) {
+          var d = ev.data;
+          if (d && d.type === 'storageResult' && typeof d.key === 'string') {
+            window.__ephoneStorageCache = window.__ephoneStorageCache || {};
+            window.__ephoneStorageCache[d.key] = d.value;
+          }
+        });
       <\/script>
     `;
 
@@ -316,6 +324,10 @@ const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
           if (op === 'set') {
             if (!isOwnSandbox) return; // системные ключи — только чтение
             if (typeof value !== 'string') return;
+            // Страж: не записываем в хранилище обрывки сериализованного JSON
+            // (вид `"}],"desktopApps":"[]"};`) — они позже выводились на экран как мусор.
+            const looksGarbage = /^[}\];"]/.test(value.trim()) || (/\\"|\\n/.test(value) && !/<[a-zA-Z!/]/.test(value));
+            if (looksGarbage) return;
             localStorage.setItem(key, value);
             window.dispatchEvent(new CustomEvent('eappStorageChanged', { detail: { key, value } }));
           } else if (op === 'remove') {
