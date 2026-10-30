@@ -10,6 +10,56 @@ const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
   const { settings, setSettings } = useAppContext();
   const [showCompatibilityModal, setShowCompatibilityModal] = useState(false);
   const [appReady, setAppReady] = useState(false);
+
+  // ===== Pinch-to-zoom (два пальца / колесо + Ctrl) =====
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const pinchState = useRef<{ dist: number; startZoom: number } | null>(null);
+  const panState = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
+
+  useEffect(() => { setZoom(1); setPan({ x: 0, y: 0 }); }, [app.id]);
+
+  const touchDist = (t: React.TouchList) => {
+    const dx = t[0].clientX - t[1].clientX;
+    const dy = t[0].clientY - t[1].clientY;
+    return Math.hypot(dx, dy);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      pinchState.current = { dist: touchDist(e.touches), startZoom: zoom };
+    }
+  };
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 2 && pinchState.current) {
+      e.preventDefault();
+      const ratio = touchDist(e.touches) / pinchState.current.dist;
+      setZoom(Math.min(3, Math.max(1, pinchState.current.startZoom * ratio)));
+    }
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (e.touches.length < 2) pinchState.current = null;
+    if (e.touches.length === 0 && zoom <= 1.01) setPan({ x: 0, y: 0 });
+  };
+  const handleWheel = (e: React.WheelEvent) => {
+    if (!e.ctrlKey) return;
+    setZoom(z => Math.min(3, Math.max(1, z - e.deltaY * 0.005)));
+  };
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (zoom > 1.05) {
+      panState.current = { x: e.clientX, y: e.clientY, px: pan.x, py: pan.y };
+    }
+  };
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (panState.current && zoom > 1) {
+      setPan({
+        x: panState.current.px + (e.clientX - panState.current.x),
+        y: panState.current.py + (e.clientY - panState.current.y),
+      });
+    }
+  };
+  const handleMouseUp = () => { panState.current = null; };
+  const resetZoom = () => { setZoom(1); setPan({ x: 0, y: 0 }); };
   
   const appVersion = getEAppVersion(app);
   const isV2 = appVersion === '1.1';
@@ -47,6 +97,9 @@ const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
           save: (key, value) => { localStorage.setItem('eapp_${app.id}_' + key, JSON.stringify(value)); },
           load: (key) => { const val = localStorage.getItem('eapp_${app.id}_' + key); return val ? JSON.parse(val) : null; },
           closeApp: () => { window.parent.postMessage({ type: 'closeApp' }, '*'); },
+          notify: (title, body) => { window.parent.postMessage({ type: 'notify', title, body }, '*'); },
+          getWeatherCity: () => { return localStorage.getItem('ephone_weather_city') || 'Москва'; },
+          setWeatherCity: (city) => { localStorage.setItem('ephone_weather_city', city); window.parent.postMessage({ type: 'weatherCity', city }, '*'); },
           getSettings: () => { return ${JSON.stringify(settings)}; },
           getModel: () => { return '${settings.phoneModel}'; },
           setSettings: (newSettings) => { window.parent.postMessage({ type: 'setSettings', settings: newSettings }, '*'); },
@@ -156,7 +209,24 @@ const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
     );
   }
 
-  return <div ref={containerRef} className="w-full h-full" style={{ minHeight: '100%' }} />;
+  return (
+    <div className="w-full h-full relative overflow-hidden touch-none select-none"
+      onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}
+      onWheel={handleWheel} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}>
+      <div ref={containerRef} className="w-full h-full" style={{
+        minHeight: '100%',
+        transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+        transformOrigin: 'center center',
+        transition: pinchState.current || panState.current ? 'none' : 'transform 0.25s cubic-bezier(0.16,1,0.3,1)',
+      }} />
+      {zoom > 1.02 && (
+        <button onClick={resetZoom}
+          className="absolute bottom-4 right-3 px-3 py-1.5 glass-dark rounded-full text-white text-xs font-semibold shadow-lg active:scale-90 transition-transform z-10">
+          {Math.round(zoom * 100)}% ✕
+        </button>
+      )}
+    </div>
+  );
 };
 
 export default EAppRenderer;
