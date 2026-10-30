@@ -29,7 +29,8 @@ const StatusBar: React.FC<StatusBarProps> = ({ time, model, onSwipeDown }) => {
           <span className="text-white text-xs font-bold">ePad</span>
         </div>
         <span className="text-white text-sm font-semibold">{timeStr}</span>
-        <div className="flex items-center gap-1 mr-32">
+        {/* Батарея и проценты сдвинуты влево на 75px, чтобы Dynamic Island не перекрывал их (только ePad101) */}
+        <div className="flex items-center gap-1" style={{ marginRight: '75px' }}>
           <span className="text-white text-xs font-medium">87%</span>
           <div className="flex items-center">
             <div className="w-6 h-3 border border-white/80 rounded-[3px] relative">

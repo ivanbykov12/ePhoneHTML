@@ -27,13 +27,14 @@
     "mines_game.eapp",
     "hn_news.eapp"
   ],
-  "version": "3.1",
+  "version": "3.2",
   "features": [
     "dark_mode_support",
     "material_icons",
     "model_compatibility_check",
     "control_center",
     "lock_screen_widgets",
-    "all_system_apps_in_eapp_format"
+    "all_system_apps_in_eapp_format",
+    "multi_page_home_screen"
   ]
 }

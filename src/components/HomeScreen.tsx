@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext, getStatusBarPadding, EApp, getEAppVersion } from '../context/AppContext';
 import { FolderOpen, Upload, Download, Trash2, Move, Home, ArrowLeft } from 'lucide-react';
 
@@ -25,6 +25,74 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
   const desktopEApps = userEApps.filter(app => desktopApps.includes(app.id));
   const folderEApps = userEApps.filter(app => !desktopApps.includes(app.id));
   const isPad = settings.phoneModel === 'epad101';
+
+  // --- Многостраничный рабочий стол ---
+  const columns = isPad ? 6 : 4;
+  const perPage = isPad ? columns * 5 : columns * 6; // место под виджеты/отступы на телефоне
+  const [page, setPage] = useState(0);
+  const [dragX, setDragX] = useState<number | null>(null);
+  const dragRef = useRef<{ startX: number; startY: number; horizontal: boolean | null } | null>(null);
+
+  const allDesktopIcons: React.ReactNode[] = [];
+  systemEApps.forEach((app, i) => allDesktopIcons.push(
+    <div key={app.id} className="flex flex-col items-center app-icon cursor-pointer relative" onClick={() => onOpenApp(app.id)}
+      style={{ animationDelay: `${i * 0.03}s` }}>
+      {renderAppIcon(app)}
+      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center border-2 border-black shadow-lg">
+        <span className="text-white text-[8px] font-bold">S</span>
+      </div>
+      <span className="text-white text-[10px] mt-1 text-center leading-tight truncate w-16 drop-shadow">{app.name}</span>
+    </div>
+  ));
+  desktopEApps.forEach(app => allDesktopIcons.push(
+    <div key={app.id} className="flex flex-col items-center app-icon cursor-pointer" onClick={() => onOpenApp(app.id)}>
+      {renderAppIcon(app)}
+      <span className="text-white text-[10px] mt-1 text-center leading-tight truncate w-16 drop-shadow">{app.name}</span>
+    </div>
+  ));
+  allDesktopIcons.push(
+    <div key="__custom_folder" className="flex flex-col items-center app-icon cursor-pointer" onClick={() => setShowCustomApps(true)}>
+      <div className="w-14 h-14 rounded-[14px] bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent" />
+        <FolderOpen className="w-7 h-7 text-white relative z-10" strokeWidth={1.8} />
+        {folderEApps.length > 0 && (
+          <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center shadow-lg animate-bounce-in">
+            <span className="text-white text-[9px] font-bold">{folderEApps.length}</span>
+          </div>
+        )}
+      </div>
+      <span className="text-white text-[10px] mt-1 text-center leading-tight truncate w-16 drop-shadow">Custom Apps</span>
+    </div>
+  );
+
+  const pageCount = Math.max(1, Math.ceil(allDesktopIcons.length / perPage));
+  const safePage = Math.min(page, pageCount - 1);
+  const pages: React.ReactNode[][] = [];
+  for (let p = 0; p < pageCount; p++) {
+    pages.push(allDesktopIcons.slice(p * perPage, (p + 1) * perPage));
+  }
+
+  const goToPage = (p: number) => setPage(Math.max(0, Math.min(pageCount - 1, p)));
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    dragRef.current = { startX: e.touches[0].clientX, startY: e.touches[0].clientY, horizontal: null };
+  };
+  const onTouchMove = (e: React.TouchEvent) => {
+    const d = dragRef.current;
+    if (!d) return;
+    const dx = e.touches[0].clientX - d.startX;
+    const dy = e.touches[0].clientY - d.startY;
+    if (d.horizontal === null) {
+      if (Math.abs(dx) > 10 || Math.abs(dy) > 10) d.horizontal = Math.abs(dx) > Math.abs(dy);
+    }
+    if (d.horizontal) setDragX(dx);
+  };
+  const onTouchEnd = () => {
+    const dx = dragX ?? 0;
+    if (Math.abs(dx) > 60) goToPage(safePage + (dx < 0 ? 1 : -1));
+    dragRef.current = null;
+    setDragX(null);
+  };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -195,49 +263,40 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
 
   return (
     <div className={`w-full h-full bg-gradient-to-b ${getWallpaper()} flex flex-col`} style={{ paddingTop }}>
-      <div className="flex-1 px-5 pt-4 overflow-y-auto">
-        <div className={`grid ${isPad ? 'grid-cols-6' : 'grid-cols-4'} gap-y-5 ${isPad ? 'gap-x-5' : 'gap-x-4'}`}>
-          {systemEApps.map((app, i) => (
-            <div key={app.id} className="flex flex-col items-center app-icon cursor-pointer relative" onClick={() => onOpenApp(app.id)}
-              style={{ animationDelay: `${i * 0.03}s` }}>
-              {renderAppIcon(app)}
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center border-2 border-black shadow-lg">
-                <span className="text-white text-[8px] font-bold">S</span>
-              </div>
-              <span className="text-white text-[10px] mt-1 text-center leading-tight truncate w-16 drop-shadow">{app.name}</span>
+      <div className="flex-1 px-5 pt-4 overflow-hidden select-none"
+        onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
+        onMouseDown={e => { dragRef.current = { startX: e.clientX, startY: e.clientY, horizontal: null }; }}
+        onMouseMove={e => {
+          const d = dragRef.current;
+          if (!d) return;
+          const dx = e.clientX - d.startX;
+          const dy = e.clientY - d.startY;
+          if (d.horizontal === null && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) d.horizontal = Math.abs(dx) > Math.abs(dy);
+          if (d.horizontal) setDragX(dx);
+        }}
+        onMouseUp={() => { if (dragRef.current) onTouchEnd(); }}
+        onMouseLeave={() => { if (dragRef.current) onTouchEnd(); }}>
+        <div className="h-full w-full flex transition-transform duration-300 ease-out"
+          style={{ transform: `translateX(calc(${-safePage * 100}% + ${(dragX ?? 0) * 0.4}px))` }}>
+          {pages.map((pageIcons, p) => (
+            <div key={p} className={`min-w-full h-full grid content-start auto-rows-min ${isPad ? 'grid-cols-6 gap-y-6 gap-x-5' : 'grid-cols-4 gap-y-5 gap-x-4'}`}>
+              {pageIcons}
             </div>
           ))}
-
-          {desktopEApps.map(app => (
-            <div key={app.id} className="flex flex-col items-center app-icon cursor-pointer" onClick={() => onOpenApp(app.id)}>
-              {renderAppIcon(app)}
-              <span className="text-white text-[10px] mt-1 text-center leading-tight truncate w-16 drop-shadow">{app.name}</span>
-            </div>
-          ))}
-
-          <div className="flex flex-col items-center app-icon cursor-pointer" onClick={() => setShowCustomApps(true)}>
-            <div className="w-14 h-14 rounded-[14px] bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent" />
-              <FolderOpen className="w-7 h-7 text-white relative z-10" strokeWidth={1.8} />
-              {folderEApps.length > 0 && (
-                <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center shadow-lg animate-bounce-in">
-                  <span className="text-white text-[9px] font-bold">{folderEApps.length}</span>
-                </div>
-              )}
-            </div>
-            <span className="text-white text-[10px] mt-1 text-center leading-tight truncate w-16 drop-shadow">Custom Apps</span>
-          </div>
         </div>
       </div>
 
-      <div className="flex justify-center gap-1 mb-2">
-        <div className="w-1.5 h-1.5 rounded-full bg-white shadow-lg" />
-        <div className="w-1.5 h-1.5 rounded-full bg-white/40" />
+      {/* Индикаторы страниц */}
+      <div className="flex justify-center items-center gap-1.5 mb-2">
+        {Array.from({ length: pageCount }).map((_, p) => (
+          <button key={p} onClick={() => goToPage(p)} aria-label={`Страница ${p + 1}`}
+            className={`rounded-full transition-all duration-300 ${p === safePage ? 'w-5 h-1.5 bg-white shadow-lg' : 'w-1.5 h-1.5 bg-white/40 active:bg-white/70'}`} />
+        ))}
       </div>
 
       <div className={`mx-4 ${isPad ? 'mb-6' : 'mb-24'} px-4 py-3 glass rounded-[22px]`}>
         <div className={`flex ${isPad ? 'justify-between' : 'justify-around'}`}>
-          {(isPad ? 
+          {(isPad ?
             ['safari_system', 'messages_system', 'music_system', 'appstore_system', 'photos_system', 'notes_system', 'calculator_system', 'clock_system'] :
             ['safari_system', 'messages_system', 'music_system', 'appstore_system']
           ).map(appId => {
