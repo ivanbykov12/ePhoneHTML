@@ -5,27 +5,34 @@ interface EAppRendererProps {
   app: EApp;
 }
 
-// Нормализация кода приложения: protected from double-encode / raw JSON display.
-// Если code случайно содержит сериализованный JSON (например, "{...}" с полем code внутри),
-// извлекаем вложенный HTML; иначе возвращаем как есть.
-const normalizeAppCode = (raw: unknown): string => {
-  if (typeof raw !== 'string') return '';
-  let code = raw.trim();
-  // Распаковка двойного JSON-кодирования (не более 2 уровней)
-  for (let i = 0; i < 2; i++) {
-    if (code.startsWith('{') || code.startsWith('"')) {
-      try {
-        const parsed = JSON.parse(code);
-        if (typeof parsed === 'string') { code = parsed.trim(); continue; }
-        if (parsed && typeof parsed === 'object' && typeof parsed.code === 'string') {
-          code = parsed.code.trim();
-          continue;
-        }
-      } catch { /* не JSON — оставляем как есть */ }
+// Нормализация кода приложения: защита от двойного JSON-кодирования и «сырого» вывода.
+// Если поле code содержит сериализованный JSON (обёрнутая строка "{\"html...\"}"
+// или объект вида {"id":..., "code":"<div..."}), рекурсивно распаковываем его,
+// пока не получим чистый HTML/JS. Чистый HTML никогда не начинается с '{' или '"',
+// поэтому такие строки не затрагиваются.
+const unwrapDoubleEncoded = (input: string, depth = 0): string => {
+  if (depth > 5) return input;
+  const code = input.trim();
+  if (!(code.startsWith('{') || code.startsWith('"'))) return code;
+  try {
+    const parsed = JSON.parse(code);
+    if (typeof parsed === 'string') return unwrapDoubleEncoded(parsed, depth + 1);
+    if (parsed && typeof parsed === 'object' && typeof parsed.code === 'string') {
+      return unwrapDoubleEncoded(parsed.code, depth + 1);
     }
-    break;
-  }
+  } catch { /* не JSON — это обычный код, оставляем как есть */ }
   return code;
+};
+
+const normalizeAppCode = (raw: unknown): string => {
+  if (typeof raw !== 'string') {
+    // Защита на случай, если code пришёл как объект (например, сохранён без сериализации)
+    if (raw && typeof raw === 'object' && typeof (raw as any).code === 'string') {
+      return unwrapDoubleEncoded((raw as any).code);
+    }
+    return '';
+  }
+  return unwrapDoubleEncoded(raw);
 };
 
 const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {

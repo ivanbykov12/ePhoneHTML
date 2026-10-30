@@ -69,6 +69,27 @@ function App() {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
           parsed.forEach((app: EApp) => {
+            // Санитайзер: защита от двойного JSON-кодирования поля code
+            // (старые записи могли быть сохранены как JSON.stringify(JSON.stringify(...)))
+            if (typeof app.code === 'string') {
+              let c = app.code.trim();
+              for (let i = 0; i < 3; i++) {
+                if (!(c.startsWith('{') || c.startsWith('"'))) break;
+                try {
+                  const inner = JSON.parse(c);
+                  if (typeof inner === 'string') { c = inner.trim(); continue; }
+                  if (inner && typeof inner === 'object' && typeof inner.code === 'string') {
+                    if (!app.id && inner.id) app.id = inner.id;
+                    if (!app.name && inner.name) app.name = inner.name;
+                    c = inner.code.trim(); continue;
+                  }
+                } catch { break; }
+                break;
+              }
+              app.code = c;
+            } else if (app.code && typeof app.code === 'object' && typeof (app.code as any).code === 'string') {
+              app.code = (app.code as any).code;
+            }
             if (!app.isSystem && !loadedUser.find(a => a.id === app.id)) {
               loadedUser.push(app);
             }

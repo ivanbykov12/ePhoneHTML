@@ -121,7 +121,23 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
     if (!file) return;
     try {
       const text = await file.text();
-      const appData = JSON.parse(text);
+      let appData = JSON.parse(text);
+      // Защита от двойной сериализации: если внутри оказался ещё один JSON — распаковываем
+      for (let i = 0; i < 3 && typeof appData === 'string'; i++) appData = JSON.parse(appData);
+      if (!appData || typeof appData !== 'object') { alert('Неверный формат .eapp!'); return; }
+      // Если поле code случайно содержит сериализованный JSON-объект приложения или строку — извлекаем HTML
+      if (typeof appData.code === 'string') {
+        const c = appData.code.trim();
+        if (c.startsWith('{') || c.startsWith('"')) {
+          try {
+            const inner = JSON.parse(c);
+            if (typeof inner === 'string') appData.code = inner;
+            else if (inner && typeof inner.code === 'string') appData.code = inner.code;
+          } catch { /* обычный код */ }
+        }
+      } else if (appData.code && typeof appData.code === 'object' && typeof appData.code.code === 'string') {
+        appData.code = appData.code.code;
+      }
       if (!appData.id || !appData.name || !appData.code) { alert('Неверный формат .eapp!'); return; }
       setCustomApps(prev => [...prev.filter(a => a.id !== appData.id), appData]);
       setShowUpload(false);
