@@ -5,6 +5,29 @@ interface EAppRendererProps {
   app: EApp;
 }
 
+// Нормализация кода приложения: protected from double-encode / raw JSON display.
+// Если code случайно содержит сериализованный JSON (например, "{...}" с полем code внутри),
+// извлекаем вложенный HTML; иначе возвращаем как есть.
+const normalizeAppCode = (raw: unknown): string => {
+  if (typeof raw !== 'string') return '';
+  let code = raw.trim();
+  // Распаковка двойного JSON-кодирования (не более 2 уровней)
+  for (let i = 0; i < 2; i++) {
+    if (code.startsWith('{') || code.startsWith('"')) {
+      try {
+        const parsed = JSON.parse(code);
+        if (typeof parsed === 'string') { code = parsed.trim(); continue; }
+        if (parsed && typeof parsed === 'object' && typeof parsed.code === 'string') {
+          code = parsed.code.trim();
+          continue;
+        }
+      } catch { /* не JSON — оставляем как есть */ }
+    }
+    break;
+  }
+  return code;
+};
+
 const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { settings, setSettings, customApps, setCustomApps } = useAppContext();
@@ -174,7 +197,7 @@ const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
         <script>window.__ephoneStorageCache = ${JSON.stringify(storageSnapshot)};<\/script>
         ${ePhoneAPI}
       </head>
-      <body>${app.code}</body>
+      <body>${normalizeAppCode(app.code)}</body>
       </html>
     `;
 
