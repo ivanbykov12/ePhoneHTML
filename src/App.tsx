@@ -200,14 +200,13 @@ function App() {
       <div className="w-full h-screen flex items-center justify-center overflow-hidden"
         style={{ background: 'radial-gradient(ellipse at center, #1a1a2e 0%, #000 100%)' }}>
         
-        {/* Phone Frame */}
+        {/* Phone Frame + обёртка с кнопкой питания справа */}
+        <div className="relative" style={{ transform: `scale(${scale})`, transformOrigin: 'center center' }}>
         <div className="relative bg-black overflow-hidden phone-shadow"
           style={{
             width: frameConfig.width,
             height: frameConfig.height,
             borderRadius: frameConfig.borderRadius,
-            transform: `scale(${scale})`,
-            transformOrigin: 'center center',
           }}>
           
           {/* Dynamic Island */}
@@ -268,18 +267,40 @@ function App() {
               onClick={() => { if (currentApp) closeApp(); else if (!isLocked) lockPhone(); }} />
           )}
 
-          {/* Side Buttons */}
-          {/* Кнопка питания (справа) — выключает экран (AOD) / включает его */}
-          <div className="absolute -right-[6px] top-[200px] w-[5px] h-[80px] bg-gradient-to-b from-gray-500 to-gray-700 rounded-r-md cursor-pointer z-[70] hover:from-gray-400 hover:to-gray-600 transition-colors"
-             title={screenOff ? 'Включить экран' : 'Выключить экран (AOD)'}
-             onClick={() => setScreenOff(v => !v)}>
-            <span className="absolute right-[9px] top-1/2 -translate-y-1/2 text-[9px] text-white/30 whitespace-nowrap pointer-events-none select-none">
-              {screenOff ? '⏻ вкл' : '⏻ выкл'}
-            </span>
-          </div>
+          {/* Side Buttons (громкость слева — внутри корпуса) */}
           <div className="absolute -left-[5px] top-[150px] w-[3px] h-[28px] bg-gradient-to-b from-gray-600 to-gray-800 rounded-l-sm" />
           <div className="absolute -left-[5px] top-[200px] w-[3px] h-[45px] bg-gradient-to-b from-gray-600 to-gray-800 rounded-l-sm" />
           <div className="absolute -left-[5px] top-[260px] w-[3px] h-[45px] bg-gradient-to-b from-gray-600 to-gray-800 rounded-l-sm" />
+        </div>
+
+        {/* Кнопка питания — крупная видимая кнопка СПРАВА ОТ корпуса (вне overflow-hidden, всегда видима).
+            Нажатие выключает экран (AOD) / включает его обратно. */}
+        <button type="button"
+          title={screenOff ? 'Включить экран' : 'Выключить экран (AOD)'}
+          onClick={() => setScreenOff(v => !v)}
+          className="absolute top-1/2 -translate-y-1/2 flex flex-col items-center justify-center gap-1
+            cursor-pointer select-none transition-all duration-150 border-none rounded-xl
+            hover:brightness-125 active:scale-95"
+          style={{
+            left: `calc(100% + 8px)`,
+            width: '44px',
+            height: '110px',
+            background: screenOff
+              ? 'linear-gradient(to bottom, #ff9d3c, #e07000)'
+              : 'linear-gradient(to bottom, #4b5563, #1f2937)',
+            boxShadow: screenOff
+              ? '0 0 18px rgba(255,140,0,0.75), inset 0 1px 3px rgba(255,255,255,0.4)'
+              : '0 4px 14px rgba(0,0,0,0.7), inset 0 1px 3px rgba(255,255,255,0.3)',
+          }}>
+          {/* Иконка питания ⏻ */}
+          <span className="pointer-events-none select-none"
+            style={{ fontSize: '20px', lineHeight: 1, color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}>⏻</span>
+          {/* Подпись состояния прямо на кнопке */}
+          <span className="pointer-events-none select-none font-semibold"
+            style={{ fontSize: '9px', lineHeight: 1, color: 'rgba(255,255,255,0.85)' }}>
+            {screenOff ? 'ВКЛ' : 'ВЫКЛ'}
+          </span>
+        </button>
         </div>
       </div>
     </AppContext.Provider>
