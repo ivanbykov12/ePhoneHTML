@@ -26,6 +26,28 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
   const folderEApps = userEApps.filter(app => !desktopApps.includes(app.id));
   const isPad = settings.phoneModel === 'epad101';
 
+  const renderAppIcon = (app: EApp, size: 'large' | 'small' = 'large') => {
+    const isMaterial = app.icon?.startsWith('material:');
+    const iconContent = isMaterial ? app.icon.replace('material:', '') : (app.icon || '📱');
+    const eappVersion = getEAppVersion(app);
+    const sizeClass = size === 'large' ? (isPad ? 'w-16 h-16' : 'w-14 h-14') : 'w-12 h-12';
+    const iconSize = size === 'large' ? (isPad ? 'text-3xl' : 'text-2xl') : 'text-xl';
+
+    return (
+      <div className={`${sizeClass} rounded-[14px] bg-gradient-to-br ${app.color || 'from-gray-400 to-gray-600'} flex items-center justify-center shadow-lg relative overflow-hidden group`}>
+        <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-active:opacity-100 transition-opacity" />
+        {isMaterial ? (
+          <span className={`material-icons text-white ${iconSize}`}>{iconContent}</span>
+        ) : (
+          <span className={iconSize}>{iconContent}</span>
+        )}
+        <div className="absolute -bottom-0.5 -right-0.5 px-1 py-0.5 bg-black/80 backdrop-blur-sm rounded text-[7px] text-white font-bold border border-white/10">
+          v{eappVersion}
+        </div>
+      </div>
+    );
+  };
+
   // --- Многостраничный рабочий стол ---
   const columns = isPad ? 6 : 4;
   const perPage = isPad ? columns * 5 : columns * 6; // место под виджеты/отступы на телефоне
@@ -119,28 +141,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
     const a = document.createElement('a');
     a.href = url; a.download = `${app.id}.eapp`; a.click();
     URL.revokeObjectURL(url);
-  };
-
-  const renderAppIcon = (app: EApp, size: 'large' | 'small' = 'large') => {
-    const isMaterial = app.icon?.startsWith('material:');
-    const iconContent = isMaterial ? app.icon.replace('material:', '') : (app.icon || '📱');
-    const eappVersion = getEAppVersion(app);
-    const sizeClass = size === 'large' ? (isPad ? 'w-16 h-16' : 'w-14 h-14') : 'w-12 h-12';
-    const iconSize = size === 'large' ? (isPad ? 'text-3xl' : 'text-2xl') : 'text-xl';
-
-    return (
-      <div className={`${sizeClass} rounded-[14px] bg-gradient-to-br ${app.color || 'from-gray-400 to-gray-600'} flex items-center justify-center shadow-lg relative overflow-hidden group`}>
-        <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-active:opacity-100 transition-opacity" />
-        {isMaterial ? (
-          <span className={`material-icons text-white ${iconSize}`}>{iconContent}</span>
-        ) : (
-          <span className={iconSize}>{iconContent}</span>
-        )}
-        <div className="absolute -bottom-0.5 -right-0.5 px-1 py-0.5 bg-black/80 backdrop-blur-sm rounded text-[7px] text-white font-bold border border-white/10">
-          v{eappVersion}
-        </div>
-      </div>
-    );
   };
 
   const getWallpaper = () => {

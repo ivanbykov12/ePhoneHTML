@@ -7,7 +7,7 @@ interface EAppRendererProps {
 
 const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { settings, setSettings } = useAppContext();
+  const { settings, setSettings, customApps, setCustomApps } = useAppContext();
   const [showCompatibilityModal, setShowCompatibilityModal] = useState(false);
   const [appReady, setAppReady] = useState(false);
 
@@ -79,8 +79,9 @@ const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
 
     const iframe = document.createElement('iframe');
     iframe.style.cssText = 'width: 100%; height: 100%; border: none; background: transparent;';
+    // Без allow-same-origin: iframe изолирован (без доступа к localStorage/origin родителя),
+    // что закрывает предупреждение браузера о возможности побега из sandbox.
     iframe.sandbox.add('allow-scripts');
-    iframe.sandbox.add('allow-same-origin');
     iframe.sandbox.add('allow-modals');
     iframe.sandbox.add('allow-popups');
     iframe.sandbox.add('allow-forms');
@@ -94,17 +95,28 @@ const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
           version: '${appVersion}',
           getScreenSize: () => ({ width: 390, height: 700 }),
           vibrate: (pattern) => { if (navigator.vibrate) navigator.vibrate(pattern); },
-          save: (key, value) => { localStorage.setItem('eapp_${app.id}_' + key, JSON.stringify(value)); },
-          load: (key) => { const val = localStorage.getItem('eapp_${app.id}_' + key); return val ? JSON.parse(val) : null; },
+          save: (key, value) => { window.parent.postMessage({ type: 'storage', op: 'set', key: 'eapp_${app.id}_' + key, value: JSON.stringify(value) }, '*'); },
+          load: (key) => { const fullKey = 'eapp_${app.id}_' + key;
+            if (window.__ephoneStorageCache && Object.prototype.hasOwnProperty.call(window.__ephoneStorageCache, fullKey)) {
+              try { return JSON.parse(window.__ephoneStorageCache[fullKey]); } catch { return null; }
+            }
+            window.parent.postMessage({ type: 'storage', op: 'get', key: fullKey }, '*');
+            return null; },
           closeApp: () => { window.parent.postMessage({ type: 'closeApp' }, '*'); },
           notify: (title, body) => { window.parent.postMessage({ type: 'notify', title, body }, '*'); },
-          getWeatherCity: () => { return localStorage.getItem('ephone_weather_city') || 'Москва'; },
-          setWeatherCity: (city) => { localStorage.setItem('ephone_weather_city', city); window.parent.postMessage({ type: 'weatherCity', city }, '*'); },
+          getWeatherCity: () => { try { return (window.__ephoneStorageCache || {})['ephone_weather_city'] || 'Москва'; } catch { return 'Москва'; } },
+          setWeatherCity: (city) => { window.parent.postMessage({ type: 'weatherCity', city }, '*'); },
           getSettings: () => { return ${JSON.stringify(settings)}; },
           getModel: () => { return '${settings.phoneModel}'; },
           setSettings: (newSettings) => { window.parent.postMessage({ type: 'setSettings', settings: newSettings }, '*'); },
           switchModel: (model) => { window.parent.postMessage({ type: 'switchModel', model: model }, '*'); },
-          getAppInfo: () => { return { id: '${app.id}', name: '${app.name}', version: '${appVersion}', author: '${app.author || 'Unknown'}' }; }
+          getAppInfo: () => { return { id: '${app.id}', name: '${app.name}', version: '${appVersion}', author: '${app.author || 'Unknown'}' }; },
+          storage: (op, key, value) => {
+            const allowed = ['customApps', 'desktopApps'];
+            if (!allowed.includes(key)) return null;
+            if (op === 'set') { window.parent.postMessage({ type: 'storage', op: 'set', key, value }, '*'); return true; }
+            return (window.__ephoneStorageCache || {})[key] || null;
+          }
         };
       <\/script>
     `;
@@ -123,6 +135,20 @@ const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
 
     let backgroundStyle = settings.darkMode ? '#000' : '#fff';
     if (isV2 && (app as any).background) backgroundStyle = (app as any).background;
+
+    // Снимок разрешённых ключей хранилища (iframe изолирован и не имеет доступа к localStorage родителя)
+    const storageSnapshot: Record<string, string | null> = {};
+    try {
+      for (const k of ['customApps', 'desktopApps', 'ephone_weather_city']) {
+        const v = localStorage.getItem(k);
+        if (v !== null) storageSnapshot[k] = v;
+      }
+      const prefix = 'eapp_' + app.id + '_';
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith(prefix)) storageSnapshot[k] = localStorage.getItem(k);
+      }
+    } catch {}
 
     const html = `
       <!DOCTYPE html>
@@ -145,6 +171,7 @@ const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
           * { scrollbar-width: none; -webkit-overflow-scrolling: touch; }
         </style>
         ${customStyleHTML}
+        <script>window.__ephoneStorageCache = ${JSON.stringify(storageSnapshot)};<\/script>
         ${ePhoneAPI}
       </head>
       <body>${app.code}</body>
@@ -158,6 +185,19 @@ const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
         window.dispatchEvent(new CustomEvent('closeEApp'));
       } else if (event.data?.type === 'setSettings') {
         setSettings(prev => ({ ...prev, ...event.data.settings }));
+      } else if (event.data?.type === 'storage') {
+        const { op, key, value } = event.data;
+        if (typeof key !== 'string') return;
+        const isAllowed = key === 'customApps' || key === 'desktopApps' || key.startsWith('eapp_');
+        if (!isAllowed) return;
+        try {
+          if (op === 'set') {
+            localStorage.setItem(key, value);
+            window.dispatchEvent(new CustomEvent('eappStorageChanged', { detail: { key, value } }));
+          } else if (op === 'get') {
+            iframe.contentWindow?.postMessage({ type: 'storageResult', key, value: localStorage.getItem(key) }, '*');
+          }
+        } catch {}
       } else if (event.data?.type === 'switchModel') {
         const model = event.data.model as PhoneModel;
         setSettings(s => ({ ...s, phoneModel: model, disableIsland: model !== 'iphone14' ? true : s.disableIsland }));
@@ -167,6 +207,30 @@ const EAppRenderer: React.FC<EAppRendererProps> = ({ app }) => {
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
   }, [app, appReady, settings, setSettings, isV2, appVersion]);
+
+  // Синхронизация React-состояния при записи системных ключей из изолированного iframe
+  useEffect(() => {
+    const onStorageChanged = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { key: string; value: string };
+      if (!detail) return;
+      if (detail.key === 'customApps') {
+        try {
+          const parsed = JSON.parse(detail.value);
+          if (Array.isArray(parsed)) {
+            setCustomApps(prev => {
+              const system = prev.filter(a => a.isSystem);
+              const injected = parsed.filter((a: EApp) => !system.find(s2 => s2.id === a.id));
+              return [...system, ...injected];
+            });
+          }
+        } catch {}
+      } else if (detail.key === 'desktopApps') {
+        try { JSON.parse(detail.value); } catch {}
+      }
+    };
+    window.addEventListener('eappStorageChanged', onStorageChanged);
+    return () => window.removeEventListener('eappStorageChanged', onStorageChanged);
+  }, [setCustomApps]);
 
   const handleSwitchModel = (model: PhoneModel) => {
     setSettings(s => ({ ...s, phoneModel: model, disableIsland: model !== 'iphone14' ? true : s.disableIsland }));
