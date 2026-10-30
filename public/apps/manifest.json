@@ -20,7 +20,12 @@
     "system/safari.eapp",
     "system/messages.eapp",
     "system/maps.eapp",
-    "system/health.eapp"
+    "system/health.eapp",
+    "memory_game.eapp",
+    "airplane_game.eapp",
+    "kosari_game.eapp",
+    "mines_game.eapp",
+    "hn_news.eapp"
   ],
   "version": "3.1",
   "features": [
