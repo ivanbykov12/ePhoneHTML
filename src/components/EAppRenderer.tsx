@@ -10,17 +10,36 @@ interface EAppRendererProps {
 // или объект вида {"id":..., "code":"<div..."}), рекурсивно распаковываем его,
 // пока не получим чистый HTML/JS. Чистый HTML никогда не начинается с '{' или '"',
 // поэтому такие строки не затрагиваются.
+// Признаки двойного JSON-кодирования: экранированные кавычки \" или переводы строк \n
+// в виде текста. Нормальный HTML-код приложения их не содержит.
+const looksDoubleEncoded = (s: string): boolean => {
+  return /\\"/.test(s) || /\\n/.test(s);
+};
+
 const unwrapDoubleEncoded = (input: string, depth = 0): string => {
   if (depth > 5) return input;
   const code = input.trim();
-  if (!(code.startsWith('{') || code.startsWith('"'))) return code;
-  try {
-    const parsed = JSON.parse(code);
-    if (typeof parsed === 'string') return unwrapDoubleEncoded(parsed, depth + 1);
-    if (parsed && typeof parsed === 'object' && typeof parsed.code === 'string') {
-      return unwrapDoubleEncoded(parsed.code, depth + 1);
-    }
-  } catch { /* не JSON — это обычный код, оставляем как есть */ }
+  // Чистый HTML (начинается с тега/комментария) и не похож на escaped-JSON — не трогаем
+  const startsLikeHtml = code.startsWith('<');
+  if (!startsLikeHtml && (code.startsWith('{') || code.startsWith('"'))) {
+    try {
+      const parsed = JSON.parse(code);
+      if (typeof parsed === 'string') return unwrapDoubleEncoded(parsed, depth + 1);
+      if (parsed && typeof parsed === 'object' && typeof parsed.code === 'string') {
+        return unwrapDoubleEncoded(parsed.code, depth + 1);
+      }
+    } catch { /* не JSON — это обычный код, оставляем как есть */ }
+  }
+  // Если внутри иначе всё ещё видны следы двойного кодирования (\" и \n как текст) —
+  // пробуем распарсить содержимое как JSON-строку и распаковать один раз.
+  if (looksDoubleEncoded(code)) {
+    try {
+      const parsed = JSON.parse(`"${code}"`);
+      if (typeof parsed === 'string' && parsed !== code) {
+        return unwrapDoubleEncoded(parsed, depth + 1);
+      }
+    } catch { /* не удалось — оставляем как есть */ }
+  }
   return code;
 };
 
