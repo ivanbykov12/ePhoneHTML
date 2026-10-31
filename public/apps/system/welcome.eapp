@@ -1,7 +1,7 @@
 {
   "id": "welcome_setup",
   "name": "Настройка",
-  "icon": "material:setup_wizard",
+  "icon": "material:build",
   "color": "from-indigo-500 to-purple-600",
   "version": "1.1.0",
   "author": "ePhone System",
