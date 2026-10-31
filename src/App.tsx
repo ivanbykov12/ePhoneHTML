@@ -234,8 +234,9 @@ function App() {
               /* Тап по AOD — экран включается И перекидывает на экран блокировки */
               <AlwaysOnDisplay time={time} onTapWake={() => { setScreenOff(false); setIsLocked(true); setCurrentApp(null); }} />
             ) : (
-              /* AOD выключен — полностью тёмный экран, тап включает его обратно */
-              <div className="absolute inset-0 z-[60] bg-black cursor-pointer" onClick={() => setScreenOff(false)} />
+              /* AOD выключен — полностью тёмный экран, тап включает его обратно.
+                 Обрезан по нижнюю рамку (iPhone 8), чтобы не перекрывать home-кнопку */
+              <div className="absolute z-[60] bg-black cursor-pointer" style={{ top: 0, left: 0, right: 0, bottom: hasHomeButton ? frameConfig.bottomBezel : 0 }} onClick={() => setScreenOff(false)} />
             )
           ) : !settings.welcomeCompleted ? (
             /* Welcome Setup - Full Screen */

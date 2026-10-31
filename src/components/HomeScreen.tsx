@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAppContext, getStatusBarPadding, getBottomSafeArea, EApp, getEAppVersion } from '../context/AppContext';
+import { useAppContext, getStatusBarPadding, getDockBottomInset, EApp, getEAppVersion } from '../context/AppContext';
 import { FolderOpen, Upload, Download, Trash2, Move, Home, ArrowLeft } from 'lucide-react';
 
 interface HomeScreenProps {
@@ -9,7 +9,7 @@ interface HomeScreenProps {
 const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
   const { settings, customApps, setCustomApps } = useAppContext();
   const paddingTop = getStatusBarPadding(settings.phoneModel);
-  const bottomSafe = getBottomSafeArea(settings.phoneModel);
+  const bottomSafe = getDockBottomInset(settings.phoneModel);
   const [showCustomApps, setShowCustomApps] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
   const [desktopApps, setDesktopApps] = useState<string[]>([]);
