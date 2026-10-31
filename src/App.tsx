@@ -227,7 +227,7 @@ function App() {
           {screenOff ? (
             settings.aodEnabled ? (
               /* Тап по AOD — экран включается И перекидывает на экран блокировки */
-              <AlwaysOnDisplay time={time} bottomInset={hasHomeButton ? frameConfig.bottomBezel : 0} onTapWake={() => { setScreenOff(false); setIsLocked(true); setCurrentApp(null); }} />
+              <AlwaysOnDisplay time={time} bottomInset={hasHomeButton ? parseInt(frameConfig.bottomBezel) : 0} onTapWake={() => { setScreenOff(false); setIsLocked(true); setCurrentApp(null); }} />
             ) : (
               /* AOD выключен — полностью тёмный экран, тап включает его обратно */
               <div className="absolute inset-0 z-[60] bg-black cursor-pointer" onClick={() => setScreenOff(false)} />
