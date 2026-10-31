@@ -4,26 +4,32 @@ import { useAppContext, AODPosition } from '../context/AppContext';
 interface AODProps {
   time: Date;
   onTapWake: () => void;
+  /** Нижняя «мертвая зона» (home-кнопка iPhone 8 / bezel), px — контент AOD не залезает на неё */
+  bottomInset?: number;
 }
 
-const POSITION_STYLE: Record<AODPosition, React.CSSProperties> = {
-  'top-left': { top: '15%', left: '0', alignItems: 'flex-start', textAlign: 'left' },
-  'top-center': { top: '15%', left: '0', right: '0', alignItems: 'center', textAlign: 'center' },
-  'top-right': { top: '15%', right: '0', alignItems: 'flex-end', textAlign: 'right' },
-  'center': { top: '42%', left: '0', right: '0', alignItems: 'center', textAlign: 'center' },
-  'bottom-left': { bottom: '18%', left: '0', alignItems: 'flex-start', textAlign: 'left' },
-  'bottom-center': { bottom: '18%', left: '0', right: '0', alignItems: 'center', textAlign: 'center' },
-  'bottom-right': { bottom: '18%', right: '0', alignItems: 'flex-end', textAlign: 'right' },
+const buildPositionStyle = (pos: AODPosition, bottomInset: number): React.CSSProperties => {
+  // нижние позиции поднимаем над нижней рамкой (безель/home-кнопка)
+  const b = `calc(18% + ${bottomInset}px)`;
+  switch (pos) {
+    case 'top-left': return { top: '15%', left: '0', alignItems: 'flex-start', textAlign: 'left' };
+    case 'top-center': return { top: '15%', left: '0', right: '0', alignItems: 'center', textAlign: 'center' };
+    case 'top-right': return { top: '15%', right: '0', alignItems: 'flex-end', textAlign: 'right' };
+    case 'center': return { top: '42%', left: '0', right: '0', alignItems: 'center', textAlign: 'center' };
+    case 'bottom-left': return { bottom: b, left: '0', alignItems: 'flex-start', textAlign: 'left' };
+    case 'bottom-center': return { bottom: b, left: '0', right: '0', alignItems: 'center', textAlign: 'center' };
+    case 'bottom-right': return { bottom: b, right: '0', alignItems: 'flex-end', textAlign: 'right' };
+  }
 };
 
-const AlwaysOnDisplay: React.FC<AODProps> = ({ time, onTapWake }) => {
+const AlwaysOnDisplay: React.FC<AODProps> = ({ time, onTapWake, bottomInset = 0 }) => {
   const { settings } = useAppContext();
 
   if (!settings.aodEnabled) return null;
 
   const timeStr = time.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
   const dateStr = time.toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'short' });
-  const posStyle = POSITION_STYLE[settings.aodPosition] || POSITION_STYLE['top-center'];
+  const posStyle = buildPositionStyle(settings.aodPosition, bottomInset);
 
   return (
     <div
@@ -42,13 +48,13 @@ const AlwaysOnDisplay: React.FC<AODProps> = ({ time, onTapWake }) => {
         <div className="text-white/35 text-sm mt-2 capitalize font-light">{dateStr}</div>
       </div>
 
-      {/* Индикатор батареи внизу по центру */}
-      <div className="absolute bottom-6 left-0 right-0 flex justify-center">
+      {/* Индикатор батареи внизу по центру (над нижней рамкой) */}
+      <div className="absolute left-0 right-0 flex justify-center" style={{ bottom: 24 + bottomInset }}>
         <span className="text-white/25 text-[11px] tracking-wide">{settings.brightness}% · AOD</span>
       </div>
 
-      {/* Подсказка о пробуждении */}
-      <div className="absolute bottom-12 left-0 right-0 flex justify-center">
+      {/* Подсказка о пробуждении (над нижней рамкой) */}
+      <div className="absolute left-0 right-0 flex justify-center" style={{ bottom: 48 + bottomInset }}>
         <span className="text-white/20 text-[11px] animate-pulse">Нажмите, чтобы включить экран</span>
       </div>
     </div>
