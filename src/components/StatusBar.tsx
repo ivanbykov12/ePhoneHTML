@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { PhoneModel } from '../context/AppContext';
 
 interface StatusBarProps {
@@ -18,18 +18,18 @@ const StatusBar: React.FC<StatusBarProps> = ({ time, model, onSwipeDown }) => {
   };
   const handleEnd = () => setStartY(null);
 
-  // ePad: ePad слева, часы по центру, батарея смещена влево
+  // ePad (ВЕРНУЛ НА НОРМАЛЬНОЕ МЕСТО)
   if (model === 'epad101') {
     return (
       <div className="absolute top-0 left-0 right-0 z-40 flex justify-between items-center px-8"
-        style={{ height: '25px', paddingTop: '5px' }}
+        style={{ height: '40px', paddingTop: '15px' }} // <--- Отступ 15px, высота 40px
         onMouseDown={e => handleStart(e.clientY)} onMouseMove={e => handleMove(e.clientY)} onMouseUp={handleEnd}
         onTouchStart={e => handleStart(e.touches[0].clientY)} onTouchMove={e => handleMove(e.touches[0].clientY)} onTouchEnd={handleEnd}>
         <div className="flex items-center gap-1.5">
           <span className="text-white text-xs font-bold">ePad</span>
         </div>
         <span className="text-white text-sm font-semibold">{timeStr}</span>
-        <div className="flex items-center gap-1 mr-32">
+        <div className="flex items-center gap-1" style={{ marginRight: '150px' }}>
           <span className="text-white text-xs font-medium">87%</span>
           <div className="flex items-center">
             <div className="w-6 h-3 border border-white/80 rounded-[3px] relative">
@@ -42,6 +42,7 @@ const StatusBar: React.FC<StatusBarProps> = ({ time, model, onSwipeDown }) => {
     );
   }
 
+  // iPhone 8
   if (model === 'iphone8') {
     return (
       <div className="absolute top-0 left-0 right-0 z-40 flex justify-between items-center px-8"
@@ -71,13 +72,18 @@ const StatusBar: React.FC<StatusBarProps> = ({ time, model, onSwipeDown }) => {
     );
   }
 
-  const paddingTop = model === 'iphonex' ? '15px' : '14px';
+  // iPhone X и iPhone 14
   return (
-    <div className="absolute top-0 left-0 right-0 z-40 flex justify-between items-center px-7"
-      style={{ paddingTop, height: model === 'iphonex' ? '50px' : '54px' }}
+    <div className={`absolute top-0 left-1/2 -translate-x-1/2 z-40 flex justify-between items-center ${model === 'iphone14' ? '-mt-3' : '-mt-1'}`}
+      style={{ 
+        width: '90%',                  
+        height: model === 'iphonex' ? '50px' : '54px' 
+      }}
       onMouseDown={e => handleStart(e.clientY)} onMouseMove={e => handleMove(e.clientY)} onMouseUp={handleEnd}
       onTouchStart={e => handleStart(e.touches[0].clientY)} onTouchMove={e => handleMove(e.touches[0].clientY)} onTouchEnd={handleEnd}>
+      
       <span className="text-white text-[15px] font-semibold tracking-tight">{timeStr}</span>
+      
       <div className="flex items-center gap-1.5">
         <svg className="w-4 h-3 text-white" viewBox="0 0 20 14" fill="currentColor">
           <rect x="0" y="8" width="3" height="6" rx="1" opacity="0.4"/>

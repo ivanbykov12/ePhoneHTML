@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext, getStatusBarPadding } from '../context/AppContext';
 
 interface LockScreenProps {
   time: Date;
@@ -8,6 +8,7 @@ interface LockScreenProps {
 
 const LockScreen: React.FC<LockScreenProps> = ({ time, onUnlock }) => {
   const { settings } = useAppContext();
+  const isPad = settings.phoneModel === 'epad101';
   const [dragY, setDragY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [startY, setStartY] = useState(0);
@@ -15,8 +16,6 @@ const LockScreen: React.FC<LockScreenProps> = ({ time, onUnlock }) => {
   const timeStr = time.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
   const dateStr = time.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
 
-  // Защита от «двойного срабатывания»: жест и глобальный обработчик не должны
-  // обрабатывать одно и то же окончание свайпа дважды.
   const endedRef = React.useRef(false);
 
   const handleStart = (clientY: number) => { endedRef.current = false; setIsDragging(true); setStartY(clientY); };
@@ -61,7 +60,7 @@ const LockScreen: React.FC<LockScreenProps> = ({ time, onUnlock }) => {
   const opacity = Math.max(0, 1 - dragY / 200);
 
   return (
-    <div className={`w-full h-full bg-gradient-to-br ${getWallpaper()} flex flex-col items-center relative overflow-hidden`}
+    <div className={`w-full h-full bg-gradient-to-br ${getWallpaper()} flex flex-col relative overflow-hidden`}
       style={{ opacity, transform: `translateY(-${dragY * 0.2}px)` }}
       onMouseDown={e => handleStart(e.clientY)} onMouseMove={e => handleMove(e.clientY)} onMouseUp={handleEnd} onMouseLeave={handleEnd}
       onTouchStart={e => handleStart(e.touches[0].clientY)} onTouchMove={e => handleMove(e.touches[0].clientY)} onTouchEnd={handleEnd}>
@@ -71,29 +70,53 @@ const LockScreen: React.FC<LockScreenProps> = ({ time, onUnlock }) => {
       <div className="absolute top-40 -right-20 w-60 h-60 bg-blue-500/20 rounded-full blur-3xl animate-float" style={{ animationDelay: '1s' }} />
       <div className="absolute bottom-40 left-1/4 w-40 h-40 bg-pink-500/15 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }} />
 
-      {/* Time */}
-      <div className="mt-20 text-center z-10">
-        <div className="text-white text-8xl font-extralight tracking-tight drop-shadow-2xl">{timeStr}</div>
-        <div className="text-white/60 text-base mt-3 capitalize font-light">{dateStr}</div>
-      </div>
-
-      {/* Notifications */}
-      <div className="mt-10 w-full px-5 space-y-2 z-10">
-        <div className="glass rounded-2xl p-3.5 flex items-center gap-3 shadow-lg notif-enter">
-          <div className="w-9 h-9 bg-blue-500 rounded-xl flex items-center justify-center shadow-md">
-            <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-            </svg>
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-white text-xs font-semibold">ePhone Simulator</div>
-            <div className="text-white/60 text-xs truncate">Свайпни вверх для разблокировки</div>
-          </div>
-          <span className="text-white/40 text-[10px]">сейчас</span>
+      {/* Время */}
+      {isPad ? (
+        <div className="absolute left-10 top-[200px] text-left z-10">
+          <div className="text-white text-8xl font-extralight tracking-tight drop-shadow-2xl">{timeStr}</div>
+          <div className="text-white/60 text-base mt-3 capitalize font-light">{dateStr}</div>
         </div>
-      </div>
+      ) : (
+        <div className="text-center z-10 mx-auto" style={{ marginTop: settings.phoneModel === 'iphone8' ? 40 : 100 }}>
+          <div className="text-white text-8xl font-extralight tracking-tight drop-shadow-2xl">{timeStr}</div>
+          <div className="text-white/60 text-base mt-3 capitalize font-light">{dateStr}</div>
+        </div>
+      )}
 
-      {/* Bottom Actions (декоративные — не перехватывают свайп) */}
+      {/* Уведомления */}
+      {isPad ? (
+        <div className="absolute left-10 top-[360px] w-full max-w-sm z-10">
+          <div className="glass rounded-2xl p-3.5 flex items-center gap-3 shadow-lg notif-enter">
+            <div className="w-9 h-9 bg-blue-500 rounded-xl flex items-center justify-center shadow-md flex-shrink-0">
+              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-white text-xs font-semibold">ePhone Simulator</div>
+              <div className="text-white/60 text-xs truncate">Свайпни вверх для разблокировки</div>
+            </div>
+            <span className="text-white/40 text-[10px] flex-shrink-0">сейчас</span>
+          </div>
+        </div>
+      ) : (
+        <div className="w-full px-5 space-y-2 z-10 mt-8">
+          <div className="glass rounded-2xl p-3.5 flex items-center gap-3 shadow-lg notif-enter">
+            <div className="w-9 h-9 bg-blue-500 rounded-xl flex items-center justify-center shadow-md flex-shrink-0">
+              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-white text-xs font-semibold">ePhone Simulator</div>
+              <div className="text-white/60 text-xs truncate">Свайпни вверх для разблокировки</div>
+            </div>
+            <span className="text-white/40 text-[10px]">сейчас</span>
+          </div>
+        </div>
+      )}
+
+      {/* Bottom Actions */}
       <div className="absolute bottom-20 left-0 right-0 flex justify-between px-10 z-10 pointer-events-none">
         <div className="w-12 h-12 glass rounded-full flex items-center justify-center shadow-lg">
           <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -108,7 +131,7 @@ const LockScreen: React.FC<LockScreenProps> = ({ time, onUnlock }) => {
         </div>
       </div>
 
-      {/* Зона разблокировки: свайп вверх ИЛИ просто нажатие — надёжно срабатывает в любом случае */}
+      {/* Зона разблокировки */}
       <div className="absolute bottom-0 left-0 right-0 h-32 z-20 flex flex-col items-center justify-end pb-6 cursor-pointer select-none"
         onMouseDown={e => { e.stopPropagation(); handleStart(e.clientY); }}
         onMouseUp={e => { e.stopPropagation(); const dist = startY - e.clientY; handleEnd(); if (dist > 80 || dist < 10) onUnlock(); }}

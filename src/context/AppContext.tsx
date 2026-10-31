@@ -11,9 +11,11 @@ export const getStatusBarPadding = (model: PhoneModel): string => {
   }
 };
 
-// Нижняя рамка корпуса в пикселях (совпадает с bottomBezel в App.tsx).
-// iPhone 8 имеет большую физическую нижнюю рамку с кнопкой Home (80px) —
-// любой полноэкранный оверлей (AOD, Control Center) должен обрезаться по ней.
+// Нижняя safe area для полноэкранных оверлеев (AOD, тёмный экран).
+// iPhone 8 имеет физическую нижнюю рамку 80px с кнопкой Home — оверлеи
+// должны обрезаться по ней, иначе перекрывают кнопку.
+// Для дока рабочего стола используется getDockBottomInset (там рамка уже
+// учтена контейнером экрана).
 export const getBottomSafeArea = (model: PhoneModel): number => {
   switch (model) {
     case 'iphone8': return 80;

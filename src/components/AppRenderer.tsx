@@ -10,7 +10,10 @@ interface AppRendererProps {
 
 const AppRenderer: React.FC<AppRendererProps> = ({ appName }) => {
   const { settings, customApps } = useAppContext();
-  const paddingTop = getStatusBarPadding(settings.phoneModel);
+  
+  // ИСПРАВЛЕНИЕ: Для планшета подняли на 10px (было 60px, стало 50px)
+  const paddingTop = settings.phoneModel === 'epad101' ? '50px' : getStatusBarPadding(settings.phoneModel);
+  
   const app = customApps.find(a => a.id === appName);
 
   if (!app) {
