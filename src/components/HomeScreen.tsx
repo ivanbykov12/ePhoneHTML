@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAppContext, getStatusBarPadding, EApp, getEAppVersion } from '../context/AppContext';
+import { useAppContext, getStatusBarPadding, getBottomSafeArea, EApp, getEAppVersion } from '../context/AppContext';
 import { FolderOpen, Upload, Download, Trash2, Move, Home, ArrowLeft } from 'lucide-react';
 
 interface HomeScreenProps {
@@ -9,6 +9,7 @@ interface HomeScreenProps {
 const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
   const { settings, customApps, setCustomApps } = useAppContext();
   const paddingTop = getStatusBarPadding(settings.phoneModel);
+  const bottomSafe = getBottomSafeArea(settings.phoneModel);
   const [showCustomApps, setShowCustomApps] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
   const [desktopApps, setDesktopApps] = useState<string[]>([]);
@@ -36,7 +37,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
       // Защита от «шума»: code обязан быть HTML-разметкой, а не строкой с сырым JSON
       // (например, случайно экспортированным дампом всего массива приложений).
       const codeStr = String(appData.code).trim();
-      if (!/^</.test(codeStr) && /^[\[{]/.test(codeStr)) {
+      if (!/^</.test(codeStr) && /^[[{]/.test(codeStr)) {
         try { JSON.parse(codeStr); alert('В файле .eapp вместо кода приложения лежит сырой JSON. Импорт отменён.'); return; } catch {}
       }
       setCustomApps(prev => [...prev.filter(a => a.id !== appData.id), appData]);
@@ -241,9 +242,13 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
         <div className="w-1.5 h-1.5 rounded-full bg-white/40" />
       </div>
 
-      <div className={`mx-4 ${isPad ? 'mb-6' : 'mb-24'} px-4 py-3 glass rounded-[22px]`}>
+      {/* Док-панель: приподнята над нижним краем на величину нижней safe area модели + зазор */}
+      <div
+        className="mx-4 px-4 py-3 glass rounded-[22px]"
+        style={{ marginBottom: bottomSafe + (isPad ? 12 : 8) }}
+      >
         <div className={`flex ${isPad ? 'justify-between' : 'justify-around'}`}>
-          {(isPad ? 
+          {(isPad ?
             ['safari_system', 'messages_system', 'music_system', 'appstore_system', 'photos_system', 'notes_system', 'calculator_system', 'clock_system'] :
             ['safari_system', 'messages_system', 'music_system', 'appstore_system']
           ).map(appId => {
