@@ -11,6 +11,15 @@ export const getStatusBarPadding = (model: PhoneModel): string => {
   }
 };
 
+export const getBottomSafeArea = (model: PhoneModel): number => {
+  switch (model) {
+    case 'iphone8': return 0;
+    case 'iphonex': return 34;
+    case 'iphone14': return 34;
+    case 'epad101': return 20;
+  }
+};
+
 export interface EApp {
   id: string;
   name: string;
