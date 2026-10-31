@@ -1,0 +1,18 @@
+{
+  "id": "hn_news",
+  "name": "Новости HN",
+  "icon": "material:newspaper",
+  "color": "from-orange-400 to-amber-600",
+  "version": "1.0.0",
+  "author": "ePhone System",
+  "description": "Свежие новости с Hacker News через реальный API.",
+  "supportedModels": [
+    "iphone8",
+    "iphonex",
+    "iphone14",
+    "epad101"
+  ],
+  "isSystem": true,
+  "changelog": "Первая версия",
+  "code": "<div class=\"wrap\"><div class=\"head\"><h1>Новости</h1><div class=\"tabs\"><button class=\"tab active\" data-k=\"top\" onclick=\"loadK(this)\">Топ</button><button class=\"tab\" data-k=\"new\" onclick=\"loadK(this)\">Свежие</button><button class=\"tab\" data-k=\"best\" onclick=\"loadK(this)\">Лучшие</button><button class=\"tab\" data-k=\"ask\" onclick=\"loadK(this)\">Ask HN</button></div></div><div id=\"list\"><div class=\"spin\"></div></div><div class=\"src\">Hacker News API · реальные данные</div></div><style>.wrap{height:100vh;background:linear-gradient(#0f1420,#1a1030);color:#fff;font-family:sans-serif;display:flex;flex-direction:column;overflow:hidden}.head{padding:14px 16px 8px}.head h1{font-size:22px;font-weight:800;margin-bottom:8px}.tabs{display:flex;gap:7px}.tab{padding:6px 13px;border-radius:16px;border:none;background:rgba(255,255,255,.08);color:#fff;font-size:12px;cursor:pointer;transition:all .2s}.tab.active{background:linear-gradient(135deg,#ff6b35,#ff9f0a);font-weight:700}#list{flex:1;overflow-y:auto;padding:8px 12px}.item{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:12px 14px;margin-bottom:8px;cursor:pointer;animation:fin .45s both;transition:transform .15s}.item:active{transform:scale(.98)}@keyframes fin{from{opacity:0;transform:translateY(16px)}to{opacity:1}}.it-t{font-size:14px;font-weight:600;line-height:1.35}.it-m{font-size:11px;opacity:.55;margin-top:5px;display:flex;gap:10px}.spin{width:34px;height:34px;border:3px solid rgba(255,255,255,.2);border-top-color:#ff6b35;border-radius:50%;margin:40px auto;animation:sp 1s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}.src{text-align:center;font-size:10px;opacity:.4;padding:8px}.err{padding:30px;text-align:center;opacity:.7}.retry{margin-top:10px;padding:8px 18px;border-radius:16px;border:none;background:#ff6b35;color:#fff;cursor:pointer}</style><script>var cache={};async function loadK(btn){var kind=btn.dataset.k;document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});btn.classList.add('active');var list=document.getElementById('list');if(cache[kind]){list.innerHTML=cache[kind];return;}list.innerHTML='<div class=\"spin\"></div>';try{var r=await fetch('https://hacker-news.firebaseio.com/v0/'+kind+'stories.json');var ids=(await r.json()).slice(0,18);var its=await Promise.all(ids.map(function(id){return fetch('https://hacker-news.firebaseio.com/v0/item/'+id+'.json').then(function(x){return x.json();});}));var html='';its.filter(Boolean).forEach(function(it,i){var mins=Math.floor((Date.now()/1000-it.time)/60);var ago=mins<60?mins+' мин':Math.floor(mins/60)+' ч';html+='<div class=\"item\" style=\"animation-delay:'+(i*0.04)+'s\"><div class=\"it-t\">'+String(it.title||'').replace(/</g,'&lt;')+'</div><div class=\"it-m\"><span>👍 '+(it.score||0)+'</span><span>💬 '+(it.descendants||0)+'</span><span>🕐 '+ago+'</span><span>👤 '+(it.by||'')+'</span></div></div>';});cache[kind]=html;list.innerHTML=html||'<div class=\"err\">Пусто</div>';}catch(e){list.innerHTML='<div class=\"err\">⚠️ Нет соединения с API<button class=\"retry\" onclick=\"location.reload()\">Обновить</button></div>';}}loadK(document.querySelector('.tab.active'));</script>"
+}

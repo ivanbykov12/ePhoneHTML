@@ -20,7 +20,9 @@
     "system/safari.eapp",
     "system/messages.eapp",
     "system/maps.eapp",
-    "system/health.eapp"
+    "system/health.eapp",
+    "system/breakout.eapp",
+    "system/memory.eapp"
   ],
   "version": "3.1",
   "features": [
