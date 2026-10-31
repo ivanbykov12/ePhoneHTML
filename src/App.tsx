@@ -45,6 +45,7 @@ function App() {
   const [showNotifCenter, setShowNotifCenter] = useState(false);
   // eSiri-подобный ассистент
   const [showAssistant, setShowAssistant] = useState(false);
+  const [assistantQuery, setAssistantQuery] = useState('');
   // Анимация перехода между приложениями
   const [appClosing, setAppClosing] = useState(false);
   const notifSeq = React.useRef(1);
@@ -190,7 +191,12 @@ function App() {
 
   useEffect(() => {
     const handleCloseEApp = () => closeApp();
-    const handleOpenAssistant = () => { setIsLocked(false); setShowAssistant(true); };
+    const handleOpenAssistant = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { query?: string } | undefined;
+      setAssistantQuery(detail?.query || '');
+      setIsLocked(false);
+      setShowAssistant(true);
+    };
     window.addEventListener('closeEApp', handleCloseEApp);
     window.addEventListener('openAssistant', handleOpenAssistant);
     return () => {
@@ -398,7 +404,8 @@ function App() {
           {/* eSiri-подобный ассистент */}
           {!screenOff && showAssistant && (
             <AssistantView
-              onClose={() => setShowAssistant(false)}
+              onClose={() => { setShowAssistant(false); setAssistantQuery(''); }}
+              initialQuery={assistantQuery}
               onCommand={(cmd) => handleAssistantCommand(cmd)}
             />
           )}

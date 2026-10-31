@@ -1,20 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface AssistantProps {
   onCommand: (cmd: string) => string; // возвращает текст ответа
   onClose: () => void;
+  initialQuery?: string; // запрос из строки поиска на рабочем столе (виджет eSiri 1×4)
 }
 
 interface Msg { role: 'user' | 'e'; text: string; }
 
 const SUGGESTIONS = ['Время', 'Погода', 'Открой калькулятор', 'Тёмная тема', 'Что ты умеешь?'];
 
-const AssistantView: React.FC<AssistantProps> = ({ onCommand, onClose }) => {
+const AssistantView: React.FC<AssistantProps> = ({ onCommand, onClose, initialQuery }) => {
   const [messages, setMessages] = useState<Msg[]>([
     { role: 'e', text: 'Слушаю. Чем помочь?' },
   ]);
   const [listening, setListening] = useState(false);
   const [input, setInput] = useState('');
+
+  // Если ассистент открыт с запросом из поиска — сразу отправляем его
+  useEffect(() => {
+    const q = (initialQuery || '').trim();
+    if (!q) return;
+    setListening(true);
+    const t = setTimeout(() => {
+      const answer = onCommand(q);
+      setMessages(prev => [...prev, { role: 'user', text: q }, { role: 'e', text: answer }]);
+      setListening(false);
+    }, 500);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialQuery]);
 
   const send = (text: string) => {
     const t = text.trim();
