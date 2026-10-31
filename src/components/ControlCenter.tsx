@@ -104,9 +104,10 @@ const ControlCenter: React.FC = () => {
                   <BellOff className="w-7 h-7" />
                 </button>
               </div>
-              <button className="w-[168px] h-[48px] bg-white/10 backdrop-blur-md rounded-full flex items-center px-4 gap-3 text-white active:bg-white/20">
+              <button onClick={() => window.dispatchEvent(new Event('openAssistant'))}
+                className="w-[168px] h-[48px] bg-white/10 backdrop-blur-md rounded-full flex items-center px-4 gap-3 text-white active:bg-white/20">
                 <Moon className="w-5 h-5" />
-                <span className="text-sm font-medium flex-1 text-left">Focus</span>
+                <span className="text-sm font-medium flex-1 text-left">eSiri</span>
                 <ChevronRight className="w-4 h-4 text-white/50" />
               </button>
             </div>

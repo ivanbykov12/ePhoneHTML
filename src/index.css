@@ -77,6 +77,37 @@ body {
   to { opacity: 1; }
 }
 
+/* Переходы между приложениями / экранами */
+@keyframes appOpen {
+  0% { transform: scale(0.88); opacity: 0; border-radius: 32px; }
+  100% { transform: scale(1); opacity: 1; border-radius: 0px; }
+}
+@keyframes appClose {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0.88); opacity: 0; }
+}
+@keyframes notifEnter {
+  0% { transform: translateY(14px) scale(0.95); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+@keyframes notifBannerEnter {
+  0% { transform: translateY(-120%); opacity: 0; }
+  12% { transform: translateY(0); opacity: 1; }
+  85% { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(-120%); opacity: 0; }
+}
+.animate-app-open { animation: appOpen 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-app-close { animation: appClose 0.28s cubic-bezier(0.7, 0, 0.84, 0) forwards; }
+.notif-enter { animation: notifEnter 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.notif-banner-enter { animation: notifBannerEnter 5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+.glass-strong {
+  background: rgba(30, 30, 40, 0.72);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
 .animate-slide-up { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 .animate-slide-down { animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 .animate-slide-from-bottom { animation: slideFromBottom 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
