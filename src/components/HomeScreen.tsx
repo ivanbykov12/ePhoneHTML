@@ -236,12 +236,13 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
         </div>
       </div>
 
-      <div className="flex justify-center gap-1 mb-2">
+      <div className="flex justify-center gap-1 mb-2 mt-[100px]">
         <div className="w-1.5 h-1.5 rounded-full bg-white shadow-lg" />
         <div className="w-1.5 h-1.5 rounded-full bg-white/40" />
       </div>
 
-      <div className={`mx-4 ${isPad ? 'mb-6' : 'mb-24'} px-4 py-3 glass rounded-[22px]`}>
+      {/* Док-панель: поднята на 100px вверх на всех устройствах */}
+      <div className={`mx-4 ${isPad ? 'mb-[106px]' : 'mb-[124px]'} px-4 py-3 glass rounded-[22px]`}>
         <div className={`flex ${isPad ? 'justify-between' : 'justify-around'}`}>
           {(isPad ? 
             ['safari_system', 'messages_system', 'music_system', 'appstore_system', 'photos_system', 'notes_system', 'calculator_system', 'clock_system'] :
