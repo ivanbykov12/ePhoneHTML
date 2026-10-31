@@ -3,11 +3,9 @@ import { useAppContext } from '../context/AppContext';
 import { Wifi, Bluetooth, Moon, Sun, Volume2, Flashlight, Camera, Calculator, Timer, X, RotateCcw, Grid3x3, Maximize2 } from 'lucide-react';
 
 interface ControlCenterProps {
-  /** Нижняя «мертвая зона» (home-кнопка iPhone 8 / bezel), px — контент не залезает на неё */
-  bottomInset?: number;
 }
 
-const ControlCenter: React.FC<ControlCenterProps> = ({ bottomInset = 0 }) => {
+const ControlCenter: React.FC<ControlCenterProps> = () => {
   const { settings, setSettings, showControlCenter, setShowControlCenter } = useAppContext();
   const [wifi, setWifi] = useState(true);
   const [bluetooth, setBluetooth] = useState(true);
@@ -36,7 +34,7 @@ const ControlCenter: React.FC<ControlCenterProps> = ({ bottomInset = 0 }) => {
       <div className="absolute inset-0 bg-black/50 backdrop-blur-md" onClick={handleClose} />
       
       <div className={`absolute ${positionClass} glass-dark overflow-hidden`}>
-        <div className="p-6 pt-14 h-full overflow-y-auto" style={{ paddingBottom: 24 + bottomInset }}>
+        <div className="p-6 pt-14 h-full overflow-y-auto">
           {/* Close Button */}
           <button onClick={handleClose}
             className="absolute top-4 right-4 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center active:bg-white/20 transition-all z-10">
@@ -115,7 +113,7 @@ const ControlCenter: React.FC<ControlCenterProps> = ({ bottomInset = 0 }) => {
           )}
 
           {/* Now Playing */}
-          <div className="glass rounded-3xl p-5">
+          <div className="glass rounded-3xl p-5 mb-4">
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 bg-gradient-to-br from-pink-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
                 <span className="text-3xl">🎵</span>

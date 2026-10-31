@@ -220,14 +220,19 @@ function App() {
           {/* Status Bar */}
           {!screenOff && <StatusBar time={time} model={settings.phoneModel} onSwipeDown={() => setShowControlCenter(true)} />}
 
-          {/* Control Center */}
-          {!screenOff && <ControlCenter bottomInset={hasHomeButton ? parseInt(frameConfig.bottomBezel) : 0} />}
+          {/* Control Center — на iPhone 8 нижняя рамка (home-кнопка) остаётся свободной:
+              панель занимает только область экрана (topBezel..bottomBezel) */}
+          {!screenOff && (
+            <div className="absolute" style={{ top: hasHomeButton ? frameConfig.topBezel : 0, left: 0, right: 0, bottom: hasHomeButton ? frameConfig.bottomBezel : 0 }}>
+              <ControlCenter />
+            </div>
+          )}
 
           {/* Content */}
           {screenOff ? (
             settings.aodEnabled ? (
               /* Тап по AOD — экран включается И перекидывает на экран блокировки */
-              <AlwaysOnDisplay time={time} bottomInset={hasHomeButton ? parseInt(frameConfig.bottomBezel) : 0} onTapWake={() => { setScreenOff(false); setIsLocked(true); setCurrentApp(null); }} />
+              <AlwaysOnDisplay time={time} onTapWake={() => { setScreenOff(false); setIsLocked(true); setCurrentApp(null); }} />
             ) : (
               /* AOD выключен — полностью тёмный экран, тап включает его обратно */
               <div className="absolute inset-0 z-[60] bg-black cursor-pointer" onClick={() => setScreenOff(false)} />
@@ -253,8 +258,9 @@ function App() {
             </div>
           )}
 
-          {/* Home Button (iPhone 8) */}
-          {hasHomeButton && !screenOff && (
+          {/* Home Button (iPhone 8) — рисуется ПОСЛЕ ControlCenter (z-[100]) и AOD,
+              поэтому всегда виден поверх них; клики по самой кнопке не перехватываются */}
+          {hasHomeButton && (
             <div className="absolute left-1/2 -translate-x-1/2 w-14 h-14 rounded-full border-2 border-gray-600/50 bg-black/50 cursor-pointer active:bg-gray-800/50 flex items-center justify-center backdrop-blur-sm transition-all"
               style={{ bottom: '18px' }}
               onClick={() => { if (currentApp) closeApp(); else if (!isLocked) lockPhone(); }}>
