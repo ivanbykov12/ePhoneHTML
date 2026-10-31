@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAppContext, AODPosition, getStatusBarPadding, getBottomSafeArea } from '../context/AppContext';
 
 interface AODProps {
   time: Date;
   onTapWake: () => void;
+  notificationCount?: number;
+  onSwipeDownToLock?: () => void;
 }
 
 const buildPositionStyle = (pos: AODPosition): React.CSSProperties => {
@@ -18,8 +20,15 @@ const buildPositionStyle = (pos: AODPosition): React.CSSProperties => {
   }
 };
 
-const AlwaysOnDisplay: React.FC<AODProps> = ({ time, onTapWake }) => {
+const AlwaysOnDisplay: React.FC<AODProps> = ({ time, onTapWake, notificationCount = 0, onSwipeDownToLock }) => {
   const { settings } = useAppContext();
+
+  const [sy, setSy] = useState<number | null>(null);
+  const onTouchStartAod = (y: number) => setSy(y);
+  const onTouchEndAod = (y: number) => {
+    if (sy !== null && y - sy > 60 && onSwipeDownToLock) { onSwipeDownToLock(); }
+    setSy(null);
+  };
 
   if (!settings.aodEnabled) return null;
 
@@ -31,7 +40,9 @@ const AlwaysOnDisplay: React.FC<AODProps> = ({ time, onTapWake }) => {
     <div
       className="absolute z-[60] bg-black cursor-pointer select-none overflow-hidden"
       style={{ top: 0, left: 0, right: 0, bottom: getBottomSafeArea(settings.phoneModel), borderRadius: 'inherit' }}
-      onClick={onTapWake}>
+      onClick={onTapWake}
+      onTouchStart={e => onTouchStartAod(e.touches[0].clientY)}
+      onTouchEnd={e => onTouchEndAod(e.changedTouches[0]?.clientY ?? 0)}>
       {/* Область AOD обрезана по нижнюю рамку корпуса (на iPhone 8 — 80px с home-кнопкой),
           поэтому часы/дата/подсказки никогда не перекрывают рамку и кнопку. */}
       <div className="absolute" style={{ top: getStatusBarPadding(settings.phoneModel), left: 0, right: 0, bottom: 0 }}>
@@ -46,6 +57,15 @@ const AlwaysOnDisplay: React.FC<AODProps> = ({ time, onTapWake }) => {
           </div>
           <div className="text-white/35 text-sm mt-2 capitalize font-light">{dateStr}</div>
         </div>
+
+        {/* Бейдж уведомлений — тап открывает экран блокировки (свайп вниз) */}
+        {notificationCount > 0 && (
+          <div className="absolute left-0 right-0 flex justify-center" style={{ bottom: 84 }}>
+            <span className="px-3 py-1.5 rounded-full bg-white/10 border border-white/10 text-white/70 text-[11px]">
+              🔔 Уведомлений: {notificationCount} — свайпните вниз
+            </span>
+          </div>
+        )}
 
         {/* Индикатор батареи внизу по центру */}
         <div className="absolute left-0 right-0 flex justify-center" style={{ bottom: 24 }}>

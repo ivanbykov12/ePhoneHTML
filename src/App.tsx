@@ -6,6 +6,9 @@ import DynamicIsland from './components/DynamicIsland';
 import AppRenderer from './components/AppRenderer';
 import ControlCenter from './components/ControlCenter';
 import AlwaysOnDisplay from './components/AlwaysOnDisplay';
+import NotificationCenter, { SimNotification } from './components/NotificationCenter';
+import NotificationBanner from './components/NotificationBanner';
+import AssistantView from './components/AssistantView';
 import { AppContext, SystemSettings, defaultSettings, PhoneModel, EApp } from './context/AppContext';
 
 // Проверка, что запись — валидное приложение, а не случайно сохранённый сырой JSON.
@@ -36,6 +39,16 @@ function App() {
   const [showControlCenter, setShowControlCenter] = useState(false);
   // Экран «выключен»: на телефоне показывается AOD (или полная темнота, если AOD отключён)
   const [screenOff, setScreenOff] = useState(false);
+  // Уведомления в реальном времени
+  const [notifications, setNotifications] = useState<SimNotification[]>([]);
+  const [banner, setBanner] = useState<SimNotification | null>(null);
+  const [showNotifCenter, setShowNotifCenter] = useState(false);
+  // eSiri-подобный ассистент
+  const [showAssistant, setShowAssistant] = useState(false);
+  const [assistantQuery, setAssistantQuery] = useState('');
+  // Анимация перехода между приложениями
+  const [appClosing, setAppClosing] = useState(false);
+  const notifSeq = React.useRef(1);
 
   useEffect(() => {
     try {
@@ -62,12 +75,56 @@ function App() {
     loadAllApps();
   }, []);
 
+  const pushNotification = (appId: string, title: string, body: string) => {
+    if (!settings.notifications) return;
+    const n: SimNotification = { id: notifSeq.current++, appId, title, body, time: Date.now() };
+    setNotifications(prev => [...prev.slice(-19), n]);
+    setBanner(n);
+    setTimeout(() => setBanner(b => (b && b.id === n.id ? null : b)), 5000);
+  };
+
+  // «Интеграция с реальными API»: периодическая погода из Open-Meteo (без ключа)
+  useEffect(() => {
+    let alive = true;
+    const fetchWeather = async () => {
+      try {
+        const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=55.75&longitude=37.62&current=temperature_2m,weather_code&timezone=auto');
+        if (!r.ok || !alive) return;
+        const d = await r.json();
+        const t = Math.round(d?.current?.temperature_2m ?? 0);
+        const wcodes: Record<number, string> = { 0: 'Ясно', 1: 'Преимущественно ясно', 2: 'Переменная облачность', 3: 'Пасмурно' };
+        const desc = wcodes[d?.current?.weather_code] ?? 'Облачно';
+        if (alive) pushNotification('weather_system', 'Погода · Open-Meteo', `${desc}, ${t}°C в Москве`);
+      } catch {}
+    };
+    const first = setTimeout(fetchWeather, 8000);
+    const timer = setInterval(fetchWeather, 5 * 60 * 1000);
+    return () => { alive = false; clearTimeout(first); clearInterval(timer); };
+  }, [settings.notifications]);
+
+  // Системные уведомления-подсказки (реальное время, без интернета)
+  useEffect(() => {
+    const tips: Array<[string, string]> = [
+      ['notes_system', 'Заметки: не забудьте заглянуть в App Store — там новинки!'],
+      ['clock_system', 'Напоминание: пора сделать перерыв от экрана 🙂'],
+      ['health_system', 'eHealth: самое время пройтись — 10 минут активности.'],
+    ];
+    let i = 0;
+    const timer = setInterval(() => {
+      const [appId, text] = tips[i % tips.length];
+      pushNotification(appId, 'ePhone', text);
+      i++;
+    }, 60 * 1000);
+    return () => clearInterval(timer);
+  }, [settings.notifications]);
+
   const loadAllApps = async () => {
     // Сначала загружаем системные приложения из файлов (всегда свежие)
     const systemApps = [
       'system/welcome.eapp',
       'system/snake.eapp', 'system/tetris.eapp', 'system/game2048.eapp',
-      'system/flappy.eapp', 'system/calculator.eapp', 'system/clock.eapp',
+      'system/flappy.eapp', 'system/breakout.eapp', 'system/memory.eapp',
+      'system/calculator.eapp', 'system/clock.eapp',
       'system/weather.eapp', 'system/settings.eapp', 'system/appstore.eapp',
       'system/notes.eapp', 'system/photos.eapp', 'system/music.eapp',
       'system/safari.eapp', 'system/messages.eapp', 'system/maps.eapp',
@@ -134,21 +191,64 @@ function App() {
 
   useEffect(() => {
     const handleCloseEApp = () => closeApp();
+    const handleOpenAssistant = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { query?: string } | undefined;
+      setAssistantQuery(detail?.query || '');
+      setIsLocked(false);
+      setShowAssistant(true);
+    };
     window.addEventListener('closeEApp', handleCloseEApp);
-    return () => window.removeEventListener('closeEApp', handleCloseEApp);
+    window.addEventListener('openAssistant', handleOpenAssistant);
+    return () => {
+      window.removeEventListener('closeEApp', handleCloseEApp);
+      window.removeEventListener('openAssistant', handleOpenAssistant);
+    };
   }, []);
 
   const openApp = (appName: string) => {
+    setAppClosing(false);
     setCurrentApp(appName);
     setIslandContent(appName);
     setTimeout(() => setIslandContent(null), 3000);
   };
 
-  const closeApp = () => setCurrentApp(null);
-  const lockPhone = () => { setIsLocked(true); setCurrentApp(null); };
+  const closeApp = () => {
+    // анимация «схлопывания» приложения перед возвратом на рабочий стол
+    setAppClosing(true);
+    setTimeout(() => { setCurrentApp(null); setAppClosing(false); }, 260);
+  };
+  const lockPhone = () => { setIsLocked(true); setCurrentApp(null); setShowNotifCenter(false); };
   const unlockPhone = () => setIsLocked(false);
 
 
+
+  const handleAssistantCommand = (raw: string): string => {
+    const cmd = raw.toLowerCase().trim();
+    const findApp = (kw: string[]) => customApps.find(a => kw.some(k => a.name.toLowerCase().includes(k) || a.id.includes(k)));
+    if (/привет|здравств|хай/.test(cmd)) return 'Привет! Я eSiri. Могу открыть приложение, сменить обои или ответить на вопрос.';
+    if (/что ты|умеешь|команд/.test(cmd)) return 'Команды: «Открой Погоду», «Тёмная тема», «Светлая тема», «Время», «Дата», «Батарея», «AOD вкл/выкл».';
+    if (/врем|котор час|сколько времени/.test(cmd)) return `Сейчас ${time.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}.`;
+    if (/дат|какой день|число/.test(cmd)) return `Сегодня ${time.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}.`;
+    if (/батар|заряд|энерги/.test(cmd)) return 'Заряд батареи: 87%, хватит ещё надолго 🔋';
+    if (/погод/.test(cmd)) { const w = findApp(['погод', 'weather']); if (w) { setTimeout(() => { setShowAssistant(false); setIsLocked(false); openApp(w.id); }, 500); return 'Открываю погоду…'; } return 'Приложение «Погода» не найдено.'; }
+    if (/тёмн|темн|dark/.test(cmd)) { setSettings(s => ({ ...s, darkMode: true })); return 'Включаю тёмную тему 🌙'; }
+    if (/светл|light/.test(cmd)) { setSettings(s => ({ ...s, darkMode: false })); return 'Тема стала светлой ☀️'; }
+    if (/aod.*вкл|aod.*выкл|включи aod|выключи aod/.test(cmd)) {
+      const enable = /вкл/.test(cmd) && !/выкл/.test(cmd);
+      setSettings(s => ({ ...s, aodEnabled: enable }));
+      return enable ? 'AOD включён — часы будут видны при выключенном экране.' : 'AOD выключен.';
+    }
+    if (/открой|запусти|приложени|launch|open/.test(cmd)) {
+      const cleaned = cmd.replace(/открой|запусти|приложение|запуски?|e?siri|пожалуйста|[.,!?]/g, '').trim();
+      const target = cleaned ? customApps.find(a => a.name.toLowerCase().includes(cleaned) || (a.name.toLowerCase() && cleaned && a.name.toLowerCase().split(' ').some(w => w.length > 3 && cleaned.includes(w)))) : undefined;
+      if (target) {
+        setTimeout(() => { setShowAssistant(false); setIsLocked(false); openApp(target.id); }, 600);
+        return `Открываю «${target.name}»…`;
+      }
+      return 'Не нашёл такое приложение. Попробуйте: «Открой Погода», «Открой Заметки», «Открой Калькулятор».';
+    }
+    return 'Хм, не совсем понял. Спросите: «Какое время?» или «Открой Калькулятор».';
+  };
 
   const getFrameConfig = () => {
     switch (settings.phoneModel) {
@@ -232,7 +332,9 @@ function App() {
           {screenOff ? (
             settings.aodEnabled ? (
               /* Тап по AOD — экран включается И перекидывает на экран блокировки */
-              <AlwaysOnDisplay time={time} onTapWake={() => { setScreenOff(false); setIsLocked(true); setCurrentApp(null); }} />
+              <AlwaysOnDisplay time={time} notificationCount={notifications.length}
+                onTapWake={() => { setScreenOff(false); setIsLocked(true); setCurrentApp(null); }}
+                onSwipeDownToLock={() => { setScreenOff(false); setIsLocked(true); setCurrentApp(null); setShowNotifCenter(true); }} />
             ) : (
               /* AOD выключен — полностью тёмный экран, тап включает его обратно.
                  Обрезан по нижнюю рамку (iPhone 8), чтобы не перекрывать home-кнопку */
@@ -250,9 +352,13 @@ function App() {
                 paddingBottom: hasHomeButton ? frameConfig.bottomBezel : '0px',
               }}>
               {isLocked ? (
-                <LockScreen time={time} onUnlock={unlockPhone} />
+                <LockScreen time={time} onUnlock={unlockPhone}
+                  notificationCount={notifications.length}
+                  onOpenNotifications={() => setShowNotifCenter(true)} />
               ) : currentApp ? (
-                <AppRenderer appName={currentApp} onClose={closeApp} onLock={lockPhone} />
+                <div className={`w-full h-full ${appClosing ? 'animate-app-close' : 'animate-app-open'}`}>
+                  <AppRenderer appName={currentApp} onClose={closeApp} onLock={lockPhone} />
+                </div>
               ) : (
                 <HomeScreen onOpenApp={openApp} />
               )}
@@ -273,6 +379,38 @@ function App() {
           {!hasHomeButton && !screenOff && (
             <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-white/40 rounded-full cursor-pointer active:bg-white/60 transition-colors"
               onClick={() => { if (currentApp) closeApp(); else if (!isLocked) lockPhone(); }} />
+          )}
+
+          {/* Баннер уведомления в реальном времени (показывается поверх всего, кроме выключенного экрана) */}
+          {!screenOff && banner && !showNotifCenter && (
+            <NotificationBanner notification={banner}
+              onTap={() => { setBanner(null); setShowNotifCenter(true); }} />
+          )}
+
+          {/* Центр уведомлений */}
+          {!screenOff && showNotifCenter && (
+            <NotificationCenter
+              notifications={notifications}
+              onDismiss={(id) => setNotifications(prev => prev.filter(n => n.id !== id))}
+              onClose={() => setShowNotifCenter(false)}
+              onOpenApp={(appId) => {
+                if (customApps.some(a => a.id === appId)) {
+                  setShowNotifCenter(false); setIsLocked(false); openApp(appId);
+                }
+              }}
+            />
+          )}
+
+          {/* eSiri-подобный ассистент — на iPhone 8 обрезан по нижнюю рамку,
+              чтобы не перекрывать кнопку Home и нижнюю рамку корпуса */}
+          {!screenOff && showAssistant && (
+            <div className="absolute z-[130]" style={{ top: 0, left: 0, right: 0, bottom: hasHomeButton ? frameConfig.bottomBezel : 0 }}>
+              <AssistantView
+                onClose={() => { setShowAssistant(false); setAssistantQuery(''); }}
+                initialQuery={assistantQuery}
+                onCommand={(cmd) => handleAssistantCommand(cmd)}
+              />
+            </div>
           )}
 
           {/* Side Buttons (громкость слева — внутри корпуса) */}

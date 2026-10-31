@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext, getStatusBarPadding, getDockBottomInset, EApp, getEAppVersion } from '../context/AppContext';
 import { FolderOpen, Upload, Download, Trash2, Move, Home, ArrowLeft } from 'lucide-react';
 
@@ -21,11 +21,81 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
 
   useEffect(() => { localStorage.setItem('desktopApps', JSON.stringify(desktopApps)); }, [desktopApps]);
 
+  // ===== Виджеты на рабочем столе =====
+  const [now, setNow] = useState(new Date());
+  useEffect(() => { const t = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(t); }, []);
+  const [widgetWeather, setWidgetWeather] = useState<{ temp: number; desc: string } | null>(null);
+  // Поиск через eSiri: строка поиска в виджете отправляет запрос ассистенту
+  const [siriQuery, setSiriQuery] = useState('');
+  const openSiriSearch = (q: string) => {
+    window.dispatchEvent(new CustomEvent('openAssistant', { detail: { query: q.trim() } }));
+  };
+  useEffect(() => {
+    let alive = true;
+    fetch('https://api.open-meteo.com/v1/forecast?latitude=55.75&longitude=37.62&current=temperature_2m,weather_code&timezone=auto')
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(d => {
+        if (!alive) return;
+        const codes: Record<number, string> = { 0: 'Ясно ☀️', 1: 'Ясно 🌤️', 2: 'Облачно ⛅', 3: 'Пасмурно ☁️' };
+        setWidgetWeather({ temp: Math.round(d?.current?.temperature_2m ?? 0), desc: codes[d?.current?.weather_code] ?? 'Облачно 🌥️' });
+      })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
+
+  // ===== Жесты: свайп между страницами + pinch-to-zoom =====
+  const [page, setPage] = useState(0); // 0 | 1
+  const [zoom, setZoom] = useState(1);
+  const zoomRef = useRef(1);
+  const touchStart = useRef<{ x: number; y: number; dist: number } | null>(null);
+  const wheelTimer = useRef<any>(null);
+
+  const clampZoom = (z: number) => Math.min(1.4, Math.max(0.7, z));
+  const applyZoom = (z: number) => { zoomRef.current = clampZoom(z); setZoom(zoomRef.current); };
+
+  const getDist = (t: React.TouchList) => {
+    const dx = t[0].clientX - t[1].clientX, dy = t[0].clientY - t[1].clientY;
+    return Math.hypot(dx, dy);
+  };
+  const onTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) touchStart.current = { x: 0, y: 0, dist: getDist(e.touches) };
+    else if (e.touches.length === 1) touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, dist: 0 };
+  };
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (!touchStart.current) return;
+    if (e.touches.length === 2 && touchStart.current.dist > 0) {
+      const d = getDist(e.touches);
+      applyZoom(zoomRef.current * (d / touchStart.current.dist));
+      touchStart.current.dist = d;
+    }
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const st = touchStart.current; touchStart.current = null;
+    if (!st || st.dist > 0) return; // был пинч
+    const t = e.changedTouches[0];
+    const dx = t.clientX - st.x, dy = t.clientY - st.y;
+    if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.5) setPage(p => (dx < 0 ? Math.min(1, p + 1) : Math.max(0, p - 1)));
+  };
+  // зум колесом с зажатым Ctrl — как на десктопе
+  const onWheel = (e: React.WheelEvent) => {
+    if (!e.ctrlKey) return;
+    applyZoom(zoomRef.current - e.deltaY * 0.004);
+    clearTimeout(wheelTimer.current);
+    wheelTimer.current = setTimeout(() => {}, 100);
+  };
+
   const systemEApps = customApps.filter(app => app.isSystem);
   const userEApps = customApps.filter(app => !app.isSystem);
   const desktopEApps = userEApps.filter(app => desktopApps.includes(app.id));
   const folderEApps = userEApps.filter(app => !desktopApps.includes(app.id));
   const isPad = settings.phoneModel === 'epad101';
+  // Сетка рабочего стола: на ePad колонки считаются по фиксированной ширине ячейки (96px),
+  // поэтому иконки и виджеты не растягиваются на всю ширину планшета.
+  const GRID_COLS = isPad ? 'repeat(auto-fill, minmax(96px, 1fr))' : 'repeat(4, minmax(0, 1fr))';
+  const WIDGET_GRID = isPad ? 'repeat(auto-fill, minmax(150px, 1fr))' : 'repeat(4, minmax(0, 1fr))';
+  const SPAN_2X2 = isPad ? 2 : 2;   // погода 2×2 (в колонках сетки иконок)
+  const SPAN_1X4 = isPad ? 4 : 4;   // eSiri+поиск 1×4 (во всю ширину)
+  const PER_PAGE = isPad ? 24 : 8;
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -202,44 +272,101 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
 
   return (
     <div className={`w-full h-full bg-gradient-to-b ${getWallpaper()} flex flex-col`} style={{ paddingTop }}>
-      <div className="flex-1 px-5 pt-4 overflow-y-auto">
-        <div className={`grid ${isPad ? 'grid-cols-6' : 'grid-cols-4'} gap-y-5 ${isPad ? 'gap-x-5' : 'gap-x-4'}`}>
-          {systemEApps.map((app, i) => (
-            <div key={app.id} className="flex flex-col items-center app-icon cursor-pointer relative" onClick={() => onOpenApp(app.id)}
-              style={{ animationDelay: `${i * 0.03}s` }}>
-              {renderAppIcon(app)}
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center border-2 border-black shadow-lg">
-                <span className="text-white text-[8px] font-bold">S</span>
-              </div>
-              <span className="text-white text-[10px] mt-1 text-center leading-tight truncate w-16 drop-shadow">{app.name}</span>
-            </div>
-          ))}
-
-          {desktopEApps.map(app => (
-            <div key={app.id} className="flex flex-col items-center app-icon cursor-pointer" onClick={() => onOpenApp(app.id)}>
-              {renderAppIcon(app)}
-              <span className="text-white text-[10px] mt-1 text-center leading-tight truncate w-16 drop-shadow">{app.name}</span>
-            </div>
-          ))}
-
-          <div className="flex flex-col items-center app-icon cursor-pointer" onClick={() => setShowCustomApps(true)}>
-            <div className="w-14 h-14 rounded-[14px] bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent" />
-              <FolderOpen className="w-7 h-7 text-white relative z-10" strokeWidth={1.8} />
-              {folderEApps.length > 0 && (
-                <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center shadow-lg animate-bounce-in">
-                  <span className="text-white text-[9px] font-bold">{folderEApps.length}</span>
-                </div>
-              )}
-            </div>
-            <span className="text-white text-[10px] mt-1 text-center leading-tight truncate w-16 drop-shadow">Custom Apps</span>
+      <div className="flex-1 px-5 pt-4 overflow-y-auto" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd} onWheel={onWheel}>
+        {/* Строка поиска объединена с eSiri в один виджет 1×4 */}
+        <div className="mb-4" style={{ display: 'grid', gridTemplateColumns: WIDGET_GRID, gridAutoRows: 'minmax(64px, auto)', gap: '12px' }}>
+          {/* eSiri + Поиск — виджет 1×4 (во всю ширину) */}
+          <div className="glass rounded-3xl relative overflow-hidden flex items-center gap-3 px-4"
+            style={{ gridColumn: `span ${SPAN_1X4}`, minHeight: '64px' }}>
+            <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(135deg, rgba(168,85,247,0.25), rgba(59,130,246,0.15))' }} />
+            <button onClick={() => window.dispatchEvent(new Event('openAssistant'))}
+              className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center shadow-lg active:scale-90 transition-transform relative z-10"
+              style={{ background: 'linear-gradient(135deg,#a855f7,#3b82f6)' }} title="eSiri — ассистент">
+              <span className="text-white text-lg">🎙️</span>
+            </button>
+            <form className="flex-1 relative z-10 min-w-0" onSubmit={e => { e.preventDefault(); openSiriSearch(siriQuery); }}>
+              <input
+                value={siriQuery}
+                onChange={e => setSiriQuery(e.target.value)}
+                placeholder="Поиск через eSiri…"
+                className="w-full bg-white/10 rounded-full px-4 py-2 text-white text-xs placeholder-white/40 outline-none focus:bg-white/15 transition-colors"
+              />
+            </form>
+            <button onClick={() => openSiriSearch(siriQuery)}
+              className="relative z-10 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center active:bg-white/20 flex-shrink-0">
+              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" />
+              </svg>
+            </button>
           </div>
+
+          {/* Часы — 1×2 (две ячейки сетки иконок по высоте) */}
+          <div className="glass rounded-3xl p-3.5 relative overflow-hidden" style={{ gridColumn: `span 1`, gridRow: `span ${isPad ? 2 : 1}` }}>
+            <div className="text-white text-[26px] font-extralight tracking-tight leading-none">
+              {now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+            </div>
+            <div className="text-white/50 text-[10px] mt-1 capitalize">{now.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
+          </div>
+
+          {/* Погода — виджет 2×2 (реальный API Open-Meteo) */}
+          <div className="glass rounded-3xl p-3.5 relative overflow-hidden" style={{ gridColumn: `span ${SPAN_2X2}`, gridRow: `span ${isPad ? 2 : 1}` }}>
+            <div className="absolute inset-0 bg-gradient-to-br from-sky-500/25 to-indigo-500/15 pointer-events-none" />
+            {widgetWeather ? (
+              <>
+                <div className="text-white text-[26px] font-extralight leading-none">{widgetWeather.temp}°</div>
+                <div className="text-white/60 text-[10px] mt-1">{widgetWeather.desc} · Москва</div>
+              </>
+            ) : (
+              <>
+                <div className="text-white/50 text-[26px] font-extralight leading-none animate-pulse">--°</div>
+                <div className="text-white/40 text-[10px] mt-1">Загрузка погоды…</div>
+              </>
+            )}
+          </div>
+        </div>
+
+        <div className="gap-y-5 gap-x-4"
+          style={{ display: 'grid', gridTemplateColumns: GRID_COLS, transform: `scale(${zoom})`, transformOrigin: 'top center', transition: 'transform 0.15s ease-out' }}>
+          {[...systemEApps, ...desktopEApps, { id: '__folder__', name: 'Custom Apps' } as any]
+            .slice(page * PER_PAGE, page * PER_PAGE + PER_PAGE)
+            .map((app: any, i) => {
+              if (app.id === '__folder__') {
+                return (
+                  <div key={app.id} className="flex flex-col items-center app-icon cursor-pointer" onClick={() => setShowCustomApps(true)}>
+                    <div className="w-14 h-14 rounded-[14px] bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg relative overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent" />
+                      <FolderOpen className="w-7 h-7 text-white relative z-10" strokeWidth={1.8} />
+                      {folderEApps.length > 0 && (
+                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center shadow-lg animate-bounce-in">
+                          <span className="text-white text-[9px] font-bold">{folderEApps.length}</span>
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-white text-[10px] mt-1 text-center leading-tight truncate w-16 drop-shadow">Custom Apps</span>
+                  </div>
+                );
+              }
+              return (
+                <div key={app.id} className="flex flex-col items-center app-icon cursor-pointer relative" onClick={() => onOpenApp(app.id)}
+                  style={{ animationDelay: `${i * 0.03}s` }}>
+                  {renderAppIcon(app)}
+                  {app.isSystem && (
+                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center border-2 border-black shadow-lg">
+                      <span className="text-white text-[8px] font-bold">S</span>
+                    </div>
+                  )}
+                  <span className="text-white text-[10px] mt-1 text-center leading-tight truncate w-16 drop-shadow">{app.name}</span>
+                </div>
+              );
+            })}
         </div>
       </div>
 
       <div className="flex justify-center gap-1 mb-2">
-        <div className="w-1.5 h-1.5 rounded-full bg-white shadow-lg" />
-        <div className="w-1.5 h-1.5 rounded-full bg-white/40" />
+        {[0, 1].map(p => (
+          <button key={p} onClick={() => setPage(p)}
+            className={`w-1.5 h-1.5 rounded-full transition-all ${p === page ? 'bg-white shadow-lg' : 'bg-white/40'}`} />
+        ))}
       </div>
 
       {/* Док-панель: приподнята над нижним краем на величину нижней safe area модели + зазор */}

@@ -4,9 +4,11 @@ import { useAppContext, getStatusBarPadding } from '../context/AppContext';
 interface LockScreenProps {
   time: Date;
   onUnlock: () => void;
+  notificationCount?: number;
+  onOpenNotifications?: () => void;
 }
 
-const LockScreen: React.FC<LockScreenProps> = ({ time, onUnlock }) => {
+const LockScreen: React.FC<LockScreenProps> = ({ time, onUnlock, notificationCount = 0, onOpenNotifications }) => {
   const { settings } = useAppContext();
   const isPad = settings.phoneModel === 'epad101';
   const [dragY, setDragY] = useState(0);
@@ -101,7 +103,8 @@ const LockScreen: React.FC<LockScreenProps> = ({ time, onUnlock }) => {
         </div>
       ) : (
         <div className="w-full px-5 space-y-2 z-10 mt-8">
-          <div className="glass rounded-2xl p-3.5 flex items-center gap-3 shadow-lg notif-enter">
+          <div className="glass rounded-2xl p-3.5 flex items-center gap-3 shadow-lg notif-enter cursor-pointer active:scale-[0.98]"
+            onClick={(e) => { e.stopPropagation(); if (onOpenNotifications) onOpenNotifications(); }}>
             <div className="w-9 h-9 bg-blue-500 rounded-xl flex items-center justify-center shadow-md flex-shrink-0">
               <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -109,9 +112,11 @@ const LockScreen: React.FC<LockScreenProps> = ({ time, onUnlock }) => {
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-white text-xs font-semibold">ePhone Simulator</div>
-              <div className="text-white/60 text-xs truncate">Свайпни вверх для разблокировки</div>
+              <div className="text-white/60 text-xs truncate">{notificationCount > 0 ? `Уведомлений: ${notificationCount} — нажмите, чтобы открыть` : 'Свайпни вверх для разблокировки'}</div>
             </div>
-            <span className="text-white/40 text-[10px]">сейчас</span>
+            {notificationCount > 0 && (
+              <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">{notificationCount}</span>
+            )}
           </div>
         </div>
       )}
