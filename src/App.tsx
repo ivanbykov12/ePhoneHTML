@@ -401,13 +401,16 @@ function App() {
             />
           )}
 
-          {/* eSiri-подобный ассистент */}
+          {/* eSiri-подобный ассистент — на iPhone 8 обрезан по нижнюю рамку,
+              чтобы не перекрывать кнопку Home и нижнюю рамку корпуса */}
           {!screenOff && showAssistant && (
-            <AssistantView
-              onClose={() => { setShowAssistant(false); setAssistantQuery(''); }}
-              initialQuery={assistantQuery}
-              onCommand={(cmd) => handleAssistantCommand(cmd)}
-            />
+            <div className="absolute z-[130]" style={{ top: 0, left: 0, right: 0, bottom: hasHomeButton ? frameConfig.bottomBezel : 0 }}>
+              <AssistantView
+                onClose={() => { setShowAssistant(false); setAssistantQuery(''); }}
+                initialQuery={assistantQuery}
+                onCommand={(cmd) => handleAssistantCommand(cmd)}
+              />
+            </div>
           )}
 
           {/* Side Buttons (громкость слева — внутри корпуса) */}
