@@ -1,17 +1,6 @@
 import React, { createContext, useContext } from 'react';
 
-export type PhoneModel = 'iphone8' | 'iphonex' | 'iphone14' | 'epad101' | 'ephoneduo';
-
-// ===== ePhone Duo (раскладной, book-style) =====
-export type DuoState = 'closed' | 'half-open' | 'open';
-
-export const DUO_SIZES: Record<DuoState, { width: number; height: number }> = {
-  closed: { width: 380, height: 800 },
-  'half-open': { width: 600, height: 800 }, // экраны под углом — виден зазор-перспектива
-  open: { width: 760, height: 800 },        // два экрана + шарнир посередине
-};
-
-export const DUO_HINGE_WIDTH = 24;
+export type PhoneModel = 'iphone8' | 'iphonex' | 'iphone14' | 'epad101';
 
 export const getStatusBarPadding = (model: PhoneModel): string => {
   switch (model) {
@@ -19,7 +8,6 @@ export const getStatusBarPadding = (model: PhoneModel): string => {
     case 'iphonex': return '50px';
     case 'iphone14': return '54px';
     case 'epad101': return '25px';
-    case 'ephoneduo': return '36px';
   }
 };
 
@@ -34,7 +22,6 @@ export const getBottomSafeArea = (model: PhoneModel): number => {
     case 'iphonex': return 34;
     case 'iphone14': return 34;
     case 'epad101': return 20;
-    case 'ephoneduo': return 24;
   }
 };
 
@@ -45,7 +32,6 @@ export const getDockBottomInset = (model: PhoneModel): number => {
     case 'iphonex': return 34;
     case 'iphone14': return 34;
     case 'epad101': return 20;
-    case 'ephoneduo': return 16;
   }
 };
 
@@ -138,9 +124,6 @@ interface AppContextType {
   setCustomApps: React.Dispatch<React.SetStateAction<EApp[]>>;
   showControlCenter: boolean;
   setShowControlCenter: (v: boolean) => void;
-  // ePhone Duo: состояние раскрытия ('closed' | 'half-open' | 'open') и флаг открытого режима
-  duoState: DuoState;
-  isDuoOpen: boolean;
 }
 
 export const AppContext = createContext<AppContextType>({
@@ -150,8 +133,6 @@ export const AppContext = createContext<AppContextType>({
   setCustomApps: () => {},
   showControlCenter: false,
   setShowControlCenter: () => {},
-  duoState: 'closed',
-  isDuoOpen: false,
 });
 
 export const useAppContext = () => useContext(AppContext);
