@@ -274,8 +274,8 @@ function App() {
     const updateScale = () => {
       const vh = window.innerHeight;
       const vw = window.innerWidth;
-      const frameH = parseInt(frameConfig.height);
       const frameW = parseInt(frameConfig.width);
+      const frameH = parseInt(frameConfig.height);
       setScale(Math.min(1, (vh - 40) / frameH, (vw - 20) / frameW));
     };
     updateScale();
@@ -295,20 +295,8 @@ function App() {
     return wallpapers[settings.wallpaper] || wallpapers.gradient1;
   };
 
-  return (
-    <AppContext.Provider value={{ settings, setSettings, customApps, setCustomApps, showControlCenter, setShowControlCenter }}>
-      <div className="w-full h-screen flex items-center justify-center overflow-hidden"
-        style={{ background: 'radial-gradient(ellipse at center, #1a1a2e 0%, #000 100%)' }}>
-        
-        {/* Phone Frame + обёртка с кнопкой питания справа */}
-        <div className="relative" style={{ transform: `scale(${scale})`, transformOrigin: 'center center' }}>
-        <div className="relative bg-black overflow-hidden phone-shadow"
-          style={{
-            width: frameConfig.width,
-            height: frameConfig.height,
-            borderRadius: frameConfig.borderRadius,
-          }}>
-          
+  const screenContent = (
+    <>
           {/* Dynamic Island */}
           {showIsland && !screenOff && <DynamicIsland content={islandContent} />}
 
@@ -318,7 +306,9 @@ function App() {
           )}
 
           {/* Status Bar */}
-          {!screenOff && <StatusBar time={time} model={settings.phoneModel} onSwipeDown={() => setShowControlCenter(true)} />}
+          {!screenOff && (
+            <StatusBar time={time} model={settings.phoneModel} onSwipeDown={() => setShowControlCenter(true)} />
+          )}
 
           {/* Control Center — на iPhone 8 нижняя рамка (home-кнопка) остаётся свободной:
               панель занимает только область экрана (topBezel..bottomBezel) */}
@@ -417,6 +407,23 @@ function App() {
           <div className="absolute -left-[5px] top-[150px] w-[3px] h-[28px] bg-gradient-to-b from-gray-600 to-gray-800 rounded-l-sm" />
           <div className="absolute -left-[5px] top-[200px] w-[3px] h-[45px] bg-gradient-to-b from-gray-600 to-gray-800 rounded-l-sm" />
           <div className="absolute -left-[5px] top-[260px] w-[3px] h-[45px] bg-gradient-to-b from-gray-600 to-gray-800 rounded-l-sm" />
+    </>
+  );
+
+  return (
+    <AppContext.Provider value={{ settings, setSettings, customApps, setCustomApps, showControlCenter, setShowControlCenter }}>
+      <div className="w-full h-screen flex items-center justify-center overflow-hidden"
+        style={{ background: 'radial-gradient(ellipse at center, #1a1a2e 0%, #000 100%)' }}>
+
+        {/* Phone Frame + обёртка с кнопкой питания справа */}
+        <div className="relative" style={{ transform: `scale(${scale})`, transformOrigin: 'center center' }}>
+        <div className="relative bg-black overflow-hidden phone-shadow"
+          style={{
+            width: frameConfig.width,
+            height: frameConfig.height,
+            borderRadius: frameConfig.borderRadius,
+          }}>
+          {screenContent}
         </div>
 
         {/* Кнопка питания — крупная видимая кнопка СПРАВА ОТ корпуса (вне overflow-hidden, всегда видима).
