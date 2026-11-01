@@ -9,7 +9,8 @@ import AlwaysOnDisplay from './components/AlwaysOnDisplay';
 import NotificationCenter, { SimNotification } from './components/NotificationCenter';
 import NotificationBanner from './components/NotificationBanner';
 import AssistantView from './components/AssistantView';
-import { AppContext, SystemSettings, defaultSettings, PhoneModel, EApp } from './context/AppContext';
+import DuoDevice from './components/DuoDevice';
+import { AppContext, SystemSettings, defaultSettings, PhoneModel, EApp, DuoState, DUO_SIZES } from './context/AppContext';
 
 // Проверка, что запись — валидное приложение, а не случайно сохранённый сырой JSON.
 // code обязан быть строкой с HTML-разметкой; массивы/объекты/JSON-дамп туда попадать не должны.
@@ -250,6 +251,9 @@ function App() {
     return 'Хм, не совсем понял. Спросите: «Какое время?» или «Открой Калькулятор».';
   };
 
+  // ===== ePhone Duo: состояния раскрытия =====
+  const [duoState, setDuoState] = useState<DuoState>('closed');
+
   const getFrameConfig = () => {
     switch (settings.phoneModel) {
       case 'iphone8':
@@ -260,6 +264,10 @@ function App() {
         return { width: '390px', height: '844px', borderRadius: '50px', topBezel: '50px', bottomBezel: '40px' };
       case 'epad101':
         return { width: '1080px', height: '810px', borderRadius: '30px', topBezel: '25px', bottomBezel: '20px' };
+      case 'ephoneduo': {
+        const s = DUO_SIZES[duoState];
+        return { width: `${s.width}px`, height: `${s.height}px`, borderRadius: duoState === 'closed' ? '36px' : '44px', topBezel: '0px', bottomBezel: '0px' };
+      }
     }
   };
 
@@ -268,20 +276,29 @@ function App() {
   const hasNotch = settings.phoneModel === 'iphonex';
   const hasHomeButton = settings.phoneModel === 'iphone8';
   const isPad = settings.phoneModel === 'epad101';
+  const isDuo = settings.phoneModel === 'ephoneduo';
+  const duoOpen = isDuo && duoState !== 'closed';
+
+  const cycleDuoState = () => {
+    if (!isDuo) return;
+    setDuoState(prev => (prev === 'closed' ? 'half-open' : prev === 'half-open' ? 'open' : 'closed'));
+  };
 
   const [scale, setScale] = useState(1);
   useEffect(() => {
     const updateScale = () => {
       const vh = window.innerHeight;
       const vw = window.innerWidth;
+      // Для Duo считаем масштаб по МАКСИМАЛЬНОЙ (раскрытой) ширине корпуса,
+      // чтобы при анимации раскрытия устройство не выходило за пределы окна
+      const maxW = isDuo ? Math.max(...Object.values(DUO_SIZES).map(s => s.width)) : parseInt(frameConfig.width);
       const frameH = parseInt(frameConfig.height);
-      const frameW = parseInt(frameConfig.width);
-      setScale(Math.min(1, (vh - 40) / frameH, (vw - 20) / frameW));
+      setScale(Math.min(1, (vh - 40) / frameH, (vw - 20) / maxW));
     };
     updateScale();
     window.addEventListener('resize', updateScale);
     return () => window.removeEventListener('resize', updateScale);
-  }, [settings.phoneModel]);
+  }, [settings.phoneModel, duoState]);
 
   const getWallpaperGradient = () => {
     const wallpapers: Record<string, string> = {
@@ -295,20 +312,8 @@ function App() {
     return wallpapers[settings.wallpaper] || wallpapers.gradient1;
   };
 
-  return (
-    <AppContext.Provider value={{ settings, setSettings, customApps, setCustomApps, showControlCenter, setShowControlCenter }}>
-      <div className="w-full h-screen flex items-center justify-center overflow-hidden"
-        style={{ background: 'radial-gradient(ellipse at center, #1a1a2e 0%, #000 100%)' }}>
-        
-        {/* Phone Frame + обёртка с кнопкой питания справа */}
-        <div className="relative" style={{ transform: `scale(${scale})`, transformOrigin: 'center center' }}>
-        <div className="relative bg-black overflow-hidden phone-shadow"
-          style={{
-            width: frameConfig.width,
-            height: frameConfig.height,
-            borderRadius: frameConfig.borderRadius,
-          }}>
-          
+  const screenContent = (
+    <>
           {/* Dynamic Island */}
           {showIsland && !screenOff && <DynamicIsland content={islandContent} />}
 
@@ -317,8 +322,27 @@ function App() {
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-7 bg-black rounded-b-[20px] z-50" />
           )}
 
-          {/* Status Bar */}
-          {!screenOff && <StatusBar time={time} model={settings.phoneModel} onSwipeDown={() => setShowControlCenter(true)} />}
+          {/* Status Bar: на Duo в открытом режиме дублируется на каждом «экране» */}
+          {!screenOff && !(isDuo && duoOpen) && (
+            <StatusBar time={time} model={settings.phoneModel} onSwipeDown={() => setShowControlCenter(true)} />
+          )}
+          {!screenOff && isDuo && duoOpen && (() => {
+            const halfW = Math.round((parseInt(frameConfig.width) - (duoState === 'open' ? 24 : 0)) / 2);
+            return (
+              <>
+                <div className="absolute top-0 left-0 overflow-hidden z-40 pointer-events-none" style={{ width: `${halfW}px`, height: '60px' }}>
+                  <div style={{ width: frameConfig.width, pointerEvents: 'auto' }}>
+                    <StatusBar time={time} model={settings.phoneModel} onSwipeDown={() => setShowControlCenter(true)} />
+                  </div>
+                </div>
+                <div className="absolute top-0 right-0 overflow-hidden z-40 pointer-events-none" style={{ width: `${halfW}px`, height: '60px' }}>
+                  <div style={{ width: frameConfig.width, position: 'absolute', right: 0, pointerEvents: 'auto' }}>
+                    <StatusBar time={time} model={settings.phoneModel} onSwipeDown={() => setShowControlCenter(true)} />
+                  </div>
+                </div>
+              </>
+            );
+          })()}
 
           {/* Control Center — на iPhone 8 нижняя рамка (home-кнопка) остаётся свободной:
               панель занимает только область экрана (topBezel..bottomBezel) */}
@@ -417,7 +441,62 @@ function App() {
           <div className="absolute -left-[5px] top-[150px] w-[3px] h-[28px] bg-gradient-to-b from-gray-600 to-gray-800 rounded-l-sm" />
           <div className="absolute -left-[5px] top-[200px] w-[3px] h-[45px] bg-gradient-to-b from-gray-600 to-gray-800 rounded-l-sm" />
           <div className="absolute -left-[5px] top-[260px] w-[3px] h-[45px] bg-gradient-to-b from-gray-600 to-gray-800 rounded-l-sm" />
+    </>
+  );
+
+  return (
+    <AppContext.Provider value={{ settings, setSettings, customApps, setCustomApps, showControlCenter, setShowControlCenter, duoState, isDuoOpen: duoOpen }}>
+      <div className="w-full h-screen flex items-center justify-center overflow-hidden"
+        style={{ background: 'radial-gradient(ellipse at center, #1a1a2e 0%, #000 100%)' }}>
+
+        {/* Phone Frame + обёртка с кнопкой питания справа */}
+        <div className="relative" style={{ transform: `scale(${scale})`, transformOrigin: 'center center' }}>
+        {isDuo ? (
+          /* ePhone Duo — раскладной корпус с анимацией ширины и шарниром */
+          <DuoDevice duoState={duoState}>
+            {screenContent}
+          </DuoDevice>
+        ) : (
+        <div className="relative bg-black overflow-hidden phone-shadow"
+          style={{
+            width: frameConfig.width,
+            height: frameConfig.height,
+            borderRadius: frameConfig.borderRadius,
+          }}>
+          {screenContent}
         </div>
+        )}
+
+        {/* Кнопка «Раскрыть / Сложить» — только для ePhone Duo, под кнопкой питания.
+            Цикл: closed → half-open → open → closed (плавная CSS-анимация ширины в DuoDevice) */}
+        {isDuo && (
+          <button type="button"
+            title={`ePhone Duo: ${duoState === 'closed' ? 'раскрыть до угла' : duoState === 'half-open' ? 'раскрыть полностью' : 'сложить'}`}
+            onClick={cycleDuoState}
+            className="absolute flex flex-col items-center justify-center gap-1 cursor-pointer select-none
+              border-none rounded-xl hover:brightness-125 active:scale-95 transition-all duration-150"
+            style={{
+              left: 'calc(100% + 8px)',
+              top: 'calc(50% + 76px)',
+              width: '44px',
+              height: '96px',
+              background: duoState === 'open'
+                ? 'linear-gradient(to bottom, #3b82f6, #1d4ed8)'
+                : duoState === 'half-open'
+                  ? 'linear-gradient(to bottom, #8b5cf6, #5b21b6)'
+                  : 'linear-gradient(to bottom, #4b5563, #1f2937)',
+              boxShadow: '0 4px 14px rgba(0,0,0,0.7), inset 0 1px 3px rgba(255,255,255,0.3)',
+            }}>
+            {/* Иконка книги/двух экранов */}
+            <svg className="w-5 h-5 text-white pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.5V19M12 6.5C10.5 5 8 4.5 4 5v13c4-.5 6.5 0 8 1.5M12 6.5C13.5 5 16 4.5 20 5v13c-4-.5-6.5 0-8 1.5" />
+            </svg>
+            <span className="pointer-events-none select-none font-semibold"
+              style={{ fontSize: '8px', lineHeight: 1.1, color: 'rgba(255,255,255,0.9)', textAlign: 'center' }}>
+              {duoState === 'closed' ? 'РАСКРЫТЬ' : duoState === 'half-open' ? 'ДО КОНЦА' : 'СЛОЖИТЬ'}
+            </span>
+          </button>
+        )}
 
         {/* Кнопка питания — крупная видимая кнопка СПРАВА ОТ корпуса (вне overflow-hidden, всегда видима).
             Нажатие выключает экран (AOD) / включает его обратно. */}

@@ -89,13 +89,21 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
   const desktopEApps = userEApps.filter(app => desktopApps.includes(app.id));
   const folderEApps = userEApps.filter(app => !desktopApps.includes(app.id));
   const isPad = settings.phoneModel === 'epad101';
+  // ePhone Duo: в открытом режиме — расширенный рабочий стол (6 колонок, больше слотов на странице)
+  const { isDuoOpen } = useAppContext();
+  const isDuo = settings.phoneModel === 'ephoneduo';
+  const duoOpen = isDuo && isDuoOpen;
   // Сетка рабочего стола: на ePad колонки считаются по фиксированной ширине ячейки (96px),
   // поэтому иконки и виджеты не растягиваются на всю ширину планшета.
-  const GRID_COLS = isPad ? 'repeat(auto-fill, minmax(96px, 1fr))' : 'repeat(4, minmax(0, 1fr))';
-  const WIDGET_GRID = isPad ? 'repeat(auto-fill, minmax(150px, 1fr))' : 'repeat(4, minmax(0, 1fr))';
+  const GRID_COLS = isPad ? 'repeat(auto-fill, minmax(96px, 1fr))'
+    : duoOpen ? 'repeat(6, minmax(0, 1fr))'
+    : 'repeat(4, minmax(0, 1fr))';
+  const WIDGET_GRID = isPad ? 'repeat(auto-fill, minmax(150px, 1fr))'
+    : duoOpen ? 'repeat(6, minmax(0, 1fr))'
+    : 'repeat(4, minmax(0, 1fr))';
   const SPAN_2X2 = isPad ? 2 : 2;   // погода 2×2 (в колонках сетки иконок)
-  const SPAN_1X4 = isPad ? 4 : 4;   // eSiri+поиск 1×4 (во всю ширину)
-  const PER_PAGE = isPad ? 24 : 8;
+  const SPAN_1X4 = isPad ? 4 : (duoOpen ? 6 : 4);   // eSiri+поиск 1×4 (во всю ширину)
+  const PER_PAGE = isPad ? 24 : (duoOpen ? 18 : 8);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
