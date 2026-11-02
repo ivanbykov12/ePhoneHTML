@@ -9,6 +9,7 @@ import AlwaysOnDisplay from './components/AlwaysOnDisplay';
 import NotificationCenter, { SimNotification } from './components/NotificationCenter';
 import NotificationBanner from './components/NotificationBanner';
 import AssistantView from './components/AssistantView';
+import { fetchXWeather } from './services/xweather';
 import { AppContext, SystemSettings, defaultSettings, PhoneModel, EApp } from './context/AppContext';
 
 // Проверка, что запись — валидное приложение, а не случайно сохранённый сырой JSON.
@@ -83,18 +84,24 @@ function App() {
     setTimeout(() => setBanner(b => (b && b.id === n.id ? null : b)), 5000);
   };
 
-  // «Интеграция с реальными API»: периодическая погода из Open-Meteo (без ключа)
+  // «Интеграция с реальными API»: периодическая погода из XWeather (ключ в .env),
+  // при недоступности XWeather — fallback на Open-Meteo.
   useEffect(() => {
     let alive = true;
     const fetchWeather = async () => {
+      const w = await fetchXWeather().catch(() => null);
+      if (w) {
+        if (alive) pushNotification('weather_system', 'Погода · XWeather', `${w.desc}, ${w.temp}°C в Нижнем Новгороде`);
+        return;
+      }
       try {
-        const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=55.75&longitude=37.62&current=temperature_2m,weather_code&timezone=auto');
+        const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=56.32&longitude=43.97&current=temperature_2m,weather_code&timezone=auto');
         if (!r.ok || !alive) return;
         const d = await r.json();
         const t = Math.round(d?.current?.temperature_2m ?? 0);
         const wcodes: Record<number, string> = { 0: 'Ясно', 1: 'Преимущественно ясно', 2: 'Переменная облачность', 3: 'Пасмурно' };
         const desc = wcodes[d?.current?.weather_code] ?? 'Облачно';
-        if (alive) pushNotification('weather_system', 'Погода · Open-Meteo', `${desc}, ${t}°C в Москве`);
+        if (alive) pushNotification('weather_system', 'Погода · Open-Meteo', `${desc}, ${t}°C в Нижнем Новгороде`);
       } catch {}
     };
     const first = setTimeout(fetchWeather, 8000);

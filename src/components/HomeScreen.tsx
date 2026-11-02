@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext, getStatusBarPadding, getDockBottomInset, EApp, getEAppVersion } from '../context/AppContext';
 import { FolderOpen, Upload, Download, Trash2, Move, Home, ArrowLeft } from 'lucide-react';
+import { fetchXWeather } from '../services/xweather';
 
 interface HomeScreenProps {
   onOpenApp: (app: string) => void;
@@ -32,15 +33,20 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
   };
   useEffect(() => {
     let alive = true;
-    fetch('https://api.open-meteo.com/v1/forecast?latitude=55.75&longitude=37.62&current=temperature_2m,weather_code&timezone=auto')
-      .then(r => r.ok ? r.json() : Promise.reject())
-      .then(d => {
-        if (!alive) return;
-        const codes: Record<number, string> = { 0: 'Ясно ☀️', 1: 'Ясно 🌤️', 2: 'Облачно ⛅', 3: 'Пасмурно ☁️' };
-        setWidgetWeather({ temp: Math.round(d?.current?.temperature_2m ?? 0), desc: codes[d?.current?.weather_code] ?? 'Облачно 🌥️' });
-      })
-      .catch(() => {});
-    return () => { alive = false; };
+    // Основной источник — XWeather (ключ в .env: VITE_XWEATHER_API_KEY),
+    // внутри fetchXWeather уже встроены цепочки резервных источников.
+    const apply = (w: { temp: number; desc: string; icon: string } | null) => {
+      if (!alive) return;
+      // Если вообще ни один источник не ответил (нет сети/ключа) — показываем
+      // демо-данные вместо вечного «Загрузка погоды…».
+      if (w) setWidgetWeather({ temp: w.temp, desc: `${w.icon} ${w.desc}` });
+      else setWidgetWeather({ temp: 12, desc: '🌥️ Облачно (демо)' });
+    };
+    const timer = setTimeout(() => apply(null), 8000); // страховка по таймауту
+    fetchXWeather()
+      .then(w => { clearTimeout(timer); apply(w); })
+      .catch(() => { clearTimeout(timer); apply(null); });
+    return () => { alive = false; clearTimeout(timer); };
   }, []);
 
   // ===== Жесты: свайп между страницами + pinch-to-zoom =====
@@ -316,7 +322,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onOpenApp }) => {
             {widgetWeather ? (
               <>
                 <div className="text-white text-[26px] font-extralight leading-none">{widgetWeather.temp}°</div>
-                <div className="text-white/60 text-[10px] mt-1">{widgetWeather.desc} · Москва</div>
+                <div className="text-white/60 text-[10px] mt-1">{widgetWeather.desc} · Нижний Новгород</div>
               </>
             ) : (
               <>
